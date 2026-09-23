@@ -1,0 +1,37 @@
+{
+  "name": "hebe-orchestrator-codex",
+  "version": "0.5.0",
+  "description": "Orquestra entregas com metas verificáveis, modelos disponíveis, Brain local por projeto e subprojeto e onboarding GitHub.",
+  "author": {
+    "name": "HeBeDigital"
+  },
+  "keywords": [
+    "orchestration",
+    "multi-agent",
+    "multi-model",
+    "codex",
+    "brain",
+    "goals",
+    "github"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "HeBe Orchestrator for Codex",
+    "shortDescription": "Projetos com cérebro, metas e agentes",
+    "longDescription": "Coordena entregas por escopo e evidências, consulta primeiro o Brain do projeto e distribui frentes entre os modelos disponíveis. Inclui núcleo local para projetos, subprojetos, decisões e eventos Git, onboarding GitHub e conector TypeSafe/Jev com configuração local de credencial e chamadas explícitas. Captura contínua e sincronização automática exigem integrações adicionais.",
+    "developerName": "HeBeDigital",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Mostre o mapa e configure HeBeBrain, GitHub e a opção Jev.",
+      "Proponha uma meta e execute esta entrega com evidências.",
+      "Confira a conexão GitHub e prepare o backup do Brain."
+    ]
+  },
+  "repository": "https://github.com/HericlisBezerra/hebe-orchestrate-Codex",
+  "homepage": "https://github.com/HericlisBezerra/hebe-orchestrate-Codex",
+  "license": "MIT"
+}

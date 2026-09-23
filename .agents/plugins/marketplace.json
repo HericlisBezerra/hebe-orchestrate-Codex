@@ -1,0 +1,20 @@
+{
+  "name": "hebe-codex",
+  "interface": {
+    "displayName": "Hebe Codex"
+  },
+  "plugins": [
+    {
+      "name": "hebe-orchestrator-codex",
+      "source": {
+        "source": "local",
+        "path": "./plugins/hebe-orchestrator-codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

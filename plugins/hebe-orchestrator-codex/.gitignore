@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.state/
+.DS_Store
+dist/
+.env
+.env.*
+!.env.example

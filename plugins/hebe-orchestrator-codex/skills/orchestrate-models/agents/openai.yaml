@@ -1,0 +1,7 @@
+interface:
+  display_name: "Orquestrador HeBe"
+  short_description: "Orquestra entregas, agentes e memória por projeto"
+  default_prompt: "Use $orchestrate-models para conferir a configuração do Brain, mostrar o mapa quando necessário e coordenar esta entrega com os modelos disponíveis adequados a cada frente."
+
+policy:
+  allow_implicit_invocation: true
