@@ -1,8 +1,49 @@
 # HeBe Orchestrator for Codex
 
-Versão 0.5.0: orquestração por escopo, modelos disponíveis e memória local por projeto, com configuração local de TypeSafe/Jev. O Brain do subprojeto é consultado primeiro; pais e cérebro central são referências adicionais usadas conforme a necessidade.
+Versão 0.6.0: orquestração por escopo com `AGENTS.md` portátil, modelos disponíveis, memória local por projeto, Playwright e TypeSafe/Jev. O Brain do subprojeto é consultado primeiro; pais e cérebro central são referências adicionais usadas conforme a necessidade.
 
 HeBeBrain é a opção principal de organização. Quem já usa Obsidian pode reaproveitá-lo; ambos podem abrir a mesma base Markdown. A [skill hebe-brain](https://github.com/HericlisBezerra/hebe-brain) e o visualizador são componentes separados: este plugin inclui o núcleo de memória e a orquestração.
+
+## Mapa vertical da entrega
+
+```mermaid
+flowchart TB
+    U([Pedido e resultado esperado]) --> C[Coordenador<br/>escopo, riscos e critérios]
+    C --> X[AGENTS.md + Brain local<br/>decisões e contexto do produto]
+    X --> G[Meta e plano verificável]
+    G --> D{Há frentes independentes?}
+    D -->|Não| E[Execução focada]
+    D -->|Sim| A1[Agente de produto e pesquisa]
+    D -->|Sim| A2[Agente de engenharia]
+    D -->|Sim| A3[Agente visual]
+    A1 --> I[Integração pelo coordenador]
+    A2 --> I
+    A3 --> I
+    E --> I
+    I --> W{Mudou experiência web?}
+    W -->|Sim| P[Playwright<br/>fluxo, desktop, mobile e erros]
+    W -->|Não| V[Verificação proporcional]
+    P --> V
+    V --> S{Risco elevado?}
+    S -->|Sim| R[Revisão independente<br/>e segurança]
+    S -->|Não| K[Registrar evidências]
+    R --> K
+    K --> B[Atualizar Brain e decisões]
+    B --> F{Critérios atendidos?}
+    F -->|Não| G
+    F -->|Sim| Z([Entrega concluída])
+
+    classDef input fill:#0f172a,color:#fff,stroke:#38bdf8,stroke-width:2px;
+    classDef control fill:#172554,color:#dbeafe,stroke:#60a5fa;
+    classDef agent fill:#312e81,color:#eef2ff,stroke:#a78bfa;
+    classDef verify fill:#052e2b,color:#ccfbf1,stroke:#2dd4bf;
+    classDef memory fill:#3f2a09,color:#fef3c7,stroke:#f59e0b;
+    class U,Z input;
+    class C,X,G,D,I,W,S,F control;
+    class A1,A2,A3,E agent;
+    class P,V,R verify;
+    class K,B memory;
+```
 
 ## Mapa e primeira configuração
 
@@ -24,6 +65,7 @@ Este fluxo é conduzido pelo agente quando a skill é carregada na conversa. Ins
 | Recurso | Implementação |
 |---|---|
 | Mapa e primeira configuração | Fluxogramas e perguntas sequenciais conduzidas pela skill |
+| Contrato multiagente | `AGENTS.md`, bridge `CLAUDE.md`, template e inicializador por projeto |
 | Registro de projetos e subprojetos | CLI local, UUID estável e pai explícito |
 | Brain, vault e decisões | Adoção de arquivos existentes; atualização de seções gerenciadas |
 | Eventos e proveniência | SQLite, idempotência, escritor serializado e reconsolidação |
@@ -33,9 +75,10 @@ Este fluxo é conduzido pelo agente quando a skill é carregada na conversa. Ins
 | Metas | Orientação para os mecanismos nativos Codex/Claude, com critérios de conclusão |
 | Modelos | Perfis de tarefa e consulta das capacidades expostas pelo host |
 | TypeSafe/Jev | Configuração local, consulta de modelos e avaliação explícita via CLI |
+| Playwright | Detecção, orientação e kit opcional desktop/mobile; testes são adaptados no produto alvo |
 | Captura contínua, sync GitHub, recuperação automática com Jev e runner Claude | Etapas seguintes; não ativados por esta versão |
 
-O núcleo usa Python 3.10+ e biblioteca padrão em macOS/Linux. Git é necessário somente para importar commits. Obsidian é opcional. O catálogo de modelos, a continuidade de metas e os limites de agentes pertencem ao host.
+O núcleo usa Python 3.10+ e biblioteca padrão em macOS/Linux. Git é necessário somente para importar commits. Node é necessário apenas no projeto que adotar o kit Playwright. Obsidian é opcional. O catálogo de modelos, a continuidade de metas e os limites de agentes pertencem ao host.
 
 ## Usar a skill
 
@@ -46,6 +89,29 @@ Após o plugin ser instalado e carregado no Codex, peça:
 Para uma entrega:
 
 > Use $orchestrate-models para organizar este produto e seus subprojetos, preservar os Brains existentes e propor uma meta com critérios de conclusão.
+
+## AGENTS.md para Codex, Claude Code e Grok
+
+O contrato compartilhado fica em `AGENTS.md`. Codex e Grok o carregam pela hierarquia do repositório; Claude Code atual também oferece leitura direta. O `CLAUDE.md` incluído importa `@AGENTS.md` para projetos que já usam instruções Claude ou precisam de compatibilidade adicional.
+
+```sh
+python3 scripts/project_context.py status --path /caminho/projeto
+python3 scripts/project_context.py init --path /caminho/projeto
+```
+
+`init` cria o contrato e o bridge Claude somente quando os arquivos não existem. Se encontrar instruções anteriores, preserva e informa a pendência para revisão. Regras de subprojeto podem viver em outro `AGENTS.md` mais próximo.
+
+Referências: [OpenAI sobre AGENTS.md](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra), [Claude Code sobre AGENTS.md](https://code.claude.com/docs/en/memory#agents-md) e [Grok CLI sobre AGENTS.md](https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-shell/README.md#agentsmd).
+
+## Playwright para evidência web
+
+Em projetos Node sem configuração existente:
+
+```sh
+python3 scripts/project_context.py web-init --path /caminho/projeto
+```
+
+O comando cria `playwright.config.ts` e `tests/e2e/smoke.spec.ts`, sem instalar dependências nem iniciar servidores. O agente adapta o teste às rotas e critérios reais do produto e usa o gerenciador já adotado para instalar `@playwright/test`. O kit cobre Chromium desktop/mobile e retém trace, screenshot e vídeo quando há falha. Veja [a política de validação](skills/orchestrate-models/references/playwright.md).
 
 Ao conduzir o onboarding, o agente verifica se o GitHub já está disponível e autenticado. Quando faltar, sugere a integração adequada; o trabalho local pode continuar. Criar repositório e enviar conteúdo dependem do destino e da autorização correspondente. Sincronização contínua ainda exige implementação.
 

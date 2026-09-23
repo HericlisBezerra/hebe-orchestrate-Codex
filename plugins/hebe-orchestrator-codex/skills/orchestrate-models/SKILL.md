@@ -9,13 +9,13 @@ Entregar com qualidade, evidência e contexto persistente. O coordenador mantém
 
 ## Primeira configuração e mapa
 
-No primeiro uso relevante sem configuração conhecida, ou quando o usuário pedir configurar, conectar ou revisar o setup, ler [onboarding.md](references/onboarding.md) e conduzir as escolhas pendentes. Verificar a skill `hebe-brain` no host atual e sugerir sua fonte oficial se ausente. Recomendar HeBeBrain; oferecer reaproveitar Obsidian existente ou usar ambos na mesma base. Definir a raiz antes de criar a central. Oferecer GitHub e Jev com o estado real das integrações; verificar credencial existente antes de abrir a configuração do conector e respeitar a ativação autorizada. Reutilizar escolhas já feitas e continuar o trabalho independente enquanto uma resposta estiver pendente.
+No primeiro uso relevante sem configuração conhecida, ou quando o usuário pedir configurar, conectar ou revisar o setup, ler [onboarding.md](references/onboarding.md) e conduzir as escolhas pendentes. Verificar ou criar o contrato portátil `AGENTS.md` conforme [agent-contract.md](references/agent-contract.md). Verificar a skill `hebe-brain` no host atual e sugerir sua fonte oficial se ausente. Recomendar HeBeBrain; oferecer reaproveitar Obsidian existente ou usar ambos na mesma base. Definir a raiz antes de criar a central. Oferecer GitHub e Jev com o estado real das integrações; verificar credencial existente antes de abrir a configuração do conector e respeitar a ativação autorizada. Reutilizar escolhas já feitas e continuar o trabalho independente enquanto uma resposta estiver pendente.
 
 Ao apresentar o projeto ou quando pedirem o mapa, mostrar o fluxograma de primeira configuração e o ciclo de entrega em [MAPA-DO-PROJETO.md](../../docs/MAPA-DO-PROJETO.md), distinguindo o que funciona hoje das integrações futuras. A instalação do plugin não abre perguntas nem executa um assistente sozinha: esse fluxo começa quando esta skill é carregada na conversa.
 
 ## Contexto e escopo
 
-1. Identificar projeto e subprojeto pelos marcadores, configuração e raízes locais. Consultar primeiro o Brain e as decisões do projeto em execução; subir aos pais e ao cérebro central apenas quando necessário.
+1. Identificar projeto e subprojeto pelos marcadores, configuração e raízes locais. Ler o `AGENTS.md` aplicável e instruções mais específicas da subpasta. Consultar primeiro o Brain e as decisões do projeto em execução; subir aos pais e ao cérebro central apenas quando necessário.
 2. Preservar formatos e decisões existentes. Para adoção, registro, atualizações de memória ou onboarding GitHub, ler [brain-and-github.md](references/brain-and-github.md).
 3. Conferir ferramentas, modelos, esforços, slots e provedores realmente disponíveis. Autorização para o trabalho local não ativa captura global nem publicação externa. Preservar autorizações já dadas sem repetir pedidos de rotina.
 4. Em entregas grandes com escopo claro, sugerir uma meta com objetivo e evidências de conclusão. Ler [delivery-goals.md](references/delivery-goals.md) ao propor ou gerenciar metas. Só criar meta nativa quando o usuário pedir ou aceitar explicitamente; o trabalho já autorizado pode avançar enquanto isso.
@@ -23,6 +23,8 @@ Ao apresentar o projeto ou quando pedirem o mapa, mostrar o fluxograma de primei
 ## Escolher a execução
 
 Preferir scripts, consultas e ferramentas determinísticas para operações reproduzíveis. Escolher modelo pela tarefa, capacidades, qualidade observada, latência e custo. Ler [model-routing.md](references/model-routing.md) para roteamento, novos modelos, Claude e Jev.
+
+Quando a entrega alterar uma interface web ou um fluxo de navegador, ler [playwright.md](references/playwright.md). Reutilizar Playwright existente; quando faltar e a evidência no navegador for material, sugerir ou preparar o kit portátil. Validar jornada principal, estado relevante de falha, desktop, mobile e erros de página. Inspeção visual do produto renderizado faz parte da evidência.
 
 Ao configurar ou usar TypeSafe/Jev, carregar a skill oficial `typesafe-ai` disponível no host e ler [typesafe-jev.md](references/typesafe-jev.md). Usar perguntas tipadas para seleção de contexto, classificação de eventos e sugestão de execução; conferir fontes, permissões e decisões aceitas separadamente. A instalação da skill não comprova conexão à API nem ativa automação do Brain. Reutilizar a autorização existente e verificar presença de credencial sem expor seu valor; solicitar segredo somente pelo mecanismo seguro implementado, se estiver ausente e a ativação tiver sido autorizada.
 

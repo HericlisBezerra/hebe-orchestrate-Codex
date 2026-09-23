@@ -1,5 +1,12 @@
 # Histórico de versões
 
+## 0.6.0 — 2026-09-23
+
+- `AGENTS.md` como contrato portátil entre Codex, Claude Code e Grok, com bridge `CLAUDE.md`.
+- Inicializador seguro por projeto, preservando instruções existentes e detectando Brain e Playwright.
+- Kit Playwright opcional com Chromium desktop/mobile, traces, screenshots, vídeos de falha e smoke test adaptável.
+- Mapa vertical redesenhado com coordenação, agentes especialistas, verificação e ciclo de memória.
+
 ## 0.5.0 — 2026-09-23
 
 - Conector TypeSafe/Jev com configuração por página local ou prompt oculto, autenticação no catálogo e avaliações explícitas.

@@ -1,7 +1,7 @@
 {
   "name": "hebe-orchestrator-codex",
-  "version": "0.5.0",
-  "description": "Orquestra entregas com metas verificáveis, modelos disponíveis, Brain local por projeto e subprojeto e onboarding GitHub.",
+  "version": "0.6.0",
+  "description": "Orquestra entregas com AGENTS.md port\u00e1til, metas verific\u00e1veis, Brain por projeto e valida\u00e7\u00e3o web com Playwright.",
   "author": {
     "name": "HeBeDigital"
   },
@@ -12,13 +12,15 @@
     "codex",
     "brain",
     "goals",
-    "github"
+    "github",
+    "agents-md",
+    "playwright"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "HeBe Orchestrator for Codex",
-    "shortDescription": "Projetos com cérebro, metas e agentes",
-    "longDescription": "Coordena entregas por escopo e evidências, consulta primeiro o Brain do projeto e distribui frentes entre os modelos disponíveis. Inclui núcleo local para projetos, subprojetos, decisões e eventos Git, onboarding GitHub e conector TypeSafe/Jev com configuração local de credencial e chamadas explícitas. Captura contínua e sincronização automática exigem integrações adicionais.",
+    "shortDescription": "Projetos com c\u00e9rebro, metas e agentes",
+    "longDescription": "Coordena entregas por escopo e evid\u00eancias usando AGENTS.md como contrato entre Codex, Claude Code e Grok. Consulta primeiro o Brain do projeto, distribui frentes entre modelos dispon\u00edveis e orienta valida\u00e7\u00e3o web com Playwright. Inclui n\u00facleo local, onboarding GitHub e conector TypeSafe/Jev expl\u00edcito.",
     "developerName": "HeBeDigital",
     "category": "Developer Tools",
     "capabilities": [
@@ -26,9 +28,10 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Mostre o mapa e configure HeBeBrain, GitHub e a opção Jev.",
-      "Proponha uma meta e execute esta entrega com evidências.",
-      "Confira a conexão GitHub e prepare o backup do Brain."
+      "Mostre o mapa e configure HeBeBrain, GitHub e a op\u00e7\u00e3o Jev.",
+      "Proponha uma meta e execute esta entrega com evid\u00eancias.",
+      "Confira a conex\u00e3o GitHub e prepare o backup do Brain.",
+      "Crie ou revise o AGENTS.md deste projeto e prepare a valida\u00e7\u00e3o Playwright se houver interface web."
     ]
   },
   "repository": "https://github.com/HericlisBezerra/hebe-orchestrate-Codex",

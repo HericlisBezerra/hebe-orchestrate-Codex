@@ -10,6 +10,14 @@ Apresentar um resumo curto: recurso, estado observado e próximo passo. Usar est
 
 Mostrar o [mapa do projeto](../../../docs/MAPA-DO-PROJETO.md) no primeiro onboarding completo e quando solicitado. Agrupar somente perguntas independentes; não bloquear trabalho local já autorizado por escolhas opcionais. Não repetir etapas concluídas a cada conversa.
 
+## 0. AGENTS.md — contrato portátil do projeto
+
+Antes de criar memória ou delegar trabalho, executar `python3 scripts/project_context.py status --path <projeto>` ou inspecionar os arquivos equivalentes. Ler [agent-contract.md](agent-contract.md).
+
+Se `AGENTS.md` existir, preservar suas regras e completar somente lacunas verificadas. Se faltar durante um setup autorizado, criar a base com `python3 scripts/project_context.py init --path <projeto>`. O comando não sobrescreve arquivos existentes e cria um `CLAUDE.md` com `@AGENTS.md` quando ainda não há um. Se já houver `CLAUDE.md` sem o import, preservar e apresentar a pendência.
+
+O mesmo `AGENTS.md` serve de contrato para Codex, Claude Code e Grok. Preencher objetivo, comandos e definição de concluído com dados reais do projeto. Em produto web, detectar Playwright; quando a validação no navegador for material, oferecer `web-init` e adaptar o teste ao fluxo real antes da execução.
+
 ## 1. Skill hebe-brain — antes de montar ou migrar o Brain
 
 Verificar o catálogo de skills do host e os caminhos locais pertinentes. Se existir uma instalação aplicável, ler `SKILL.md`, preservar seu formato e registrar sua origem. Uma cópia em `~/.claude/skills` pode ser lida como referência, mas não significa que esteja instalada ou descoberta no Codex.
@@ -71,4 +79,4 @@ Registrar somente escolhas do setup: raiz central, uso de Obsidian, origem e dis
 
 Sem raiz escolhida, manter o resumo na conversa e informar essa pendência. Em outra sessão, se não houver configuração acessível nem contexto anterior, pedir a raiz existente antes de propor criar outra. Falhas e mudança de projeto/conta podem exigir rever só a etapa afetada.
 
-Finalizar com o que está utilizável, o que aguarda escolha e o que aguarda implementação. Instalar o plugin, instalar hebe-brain, registrar projetos, conectar GitHub e ativar Jev são resultados distintos.
+Finalizar com o que está utilizável, o que aguarda escolha e o que aguarda implementação. Contrato `AGENTS.md`, Playwright, instalação do plugin, skill hebe-brain, registro de projetos, GitHub e Jev são resultados distintos.

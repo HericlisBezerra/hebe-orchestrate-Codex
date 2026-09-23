@@ -1,6 +1,6 @@
 # HeBe Orchestrator: cérebro, execução e aprendizado
 
-Data da investigação: 2026-09-23. Status: **arquitetura aprovada, núcleo local e conector explícito TypeSafe/Jev disponíveis na versão 0.5.0**. Estão implementados o registro de projetos/subprojetos, eventos em SQLite, consolidação Markdown, consulta local e coleta explícita de commits Git. A skill incorpora primeira configuração conversacional e metas por escopo. Captura contínua, worker permanente, sync GitHub, recuperação automática com Jev e runner Claude continuam sendo etapas posteriores. Consulte o README para o estado operacional desta versão e o [mapa do projeto](MAPA-DO-PROJETO.md) para a sequência de configuração.
+Data da investigação: 2026-09-23. Status: **arquitetura aprovada, contrato AGENTS.md, núcleo local, kit Playwright e conector explícito TypeSafe/Jev disponíveis na versão 0.6.0**. Estão implementados o contrato portátil por projeto, o registro de projetos/subprojetos, eventos em SQLite, consolidação Markdown, consulta local e coleta explícita de commits Git. A skill incorpora primeira configuração conversacional e metas por escopo. Captura contínua, worker permanente, sync GitHub, recuperação automática com Jev e runner Claude continuam sendo etapas posteriores. Consulte o README para o estado operacional desta versão e o [mapa do projeto](MAPA-DO-PROJETO.md) para a sequência de configuração.
 
 Diretrizes do produto: sugerir GitHub no onboarding quando a integração faltar; manter Brain independente em cada projeto/subprojeto, consultado antes do geral; sugerir metas nativas para entregas compostas e só concluir com todos os critérios atendidos.
 
@@ -18,6 +18,7 @@ O desenho inclui: um Brain por projeto, um cérebro pessoal central, Obsidian op
 - O visualizador HeBeBrain já permite navegar múltiplos Brains localmente e é independente de Obsidian. Sua distribuição é separada deste plugin; instalar a skill não instala o visualizador.
 - A presença de Codex ou Claude Code não comprova que hooks estejam confiados, que uma ponte esteja ativa ou que modelos específicos estejam liberados. Conferir capacidades em cada instalação.
 - A skill `hebe-security-scan` é uma integração opcional de revisão proporcional ao risco; este pacote não a inclui.
+- `AGENTS.md` é o contrato portátil para Codex, Claude Code e Grok. `scripts/project_context.py` inicializa o contrato sem sobrescrever instruções e pode preparar um kit Playwright no produto alvo.
 
 ## Desenho proposto
 
@@ -231,4 +232,4 @@ Essas escolhas não impedem o desenho do núcleo. Tornam-se entradas concretas d
 - [Empacotamento e hooks de plugins Codex](https://developers.openai.com/plugins/build/plugins): hooks precisam estar disponíveis e confiados; instalar o plugin não concede confiança automaticamente.
 - [Hooks Claude Code](https://code.claude.com/docs/en/hooks): eventos para captura local; handlers devem enfileirar rapidamente.
 
-Pesquisa executada em frentes independentes (hebe-brain, Jev, Claude bridge), integrada com inspeção do plugin e documentação oficial. A versão 0.5.0 inclui o conector TypeSafe/Jev; cada instalação depende de sua própria credencial. Configurar o acesso consulta o catálogo de modelos e não envia notas. Nenhum envio contínuo de conteúdo ou sincronização externa é ativado pela instalação.
+Pesquisa executada em frentes independentes (hebe-brain, Jev, Claude bridge), integrada com inspeção do plugin e documentação oficial. A versão 0.6.0 inclui o conector TypeSafe/Jev; cada instalação depende de sua própria credencial. Configurar o acesso consulta o catálogo de modelos e não envia notas. Nenhum envio contínuo de conteúdo ou sincronização externa é ativado pela instalação.
