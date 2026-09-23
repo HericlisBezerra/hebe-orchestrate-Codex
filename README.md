@@ -1,6 +1,6 @@
 # HeBe Orchestrator for Codex
 
-**Versão 0.6.0** — orquestração com `AGENTS.md` portátil, modelos disponíveis, metas verificáveis, memória por projeto/subprojeto e validação web com Playwright.
+**Versão 0.7.0** — orquestração com retomada por projeto, critérios verificáveis, agentes em lotes, `AGENTS.md` portátil e checkpoints no HeBeBrain.
 
 O HeBeBrain é a opção principal para organizar conhecimento. Quem já usa Obsidian pode reaproveitar o vault ou abrir a mesma base nas duas interfaces. Cada projeto mantém seu próprio Brain; a central relaciona as fontes e o conhecimento transversal.
 
@@ -15,7 +15,7 @@ codex plugin add hebe-orchestrator-codex@hebe-codex
 
 Abra uma nova conversa na pasta do seu projeto e peça:
 
-> Use $orchestrate-models para mostrar o mapa e configurar meu HeBeBrain, GitHub e as integrações disponíveis.
+> Use $orchestrate-models para conferir o projeto, retomar a entrega aberta e avançar no próximo critério pendente.
 
 O onboarding acontece na conversa quando a skill é carregada. Ele reaproveita escolhas existentes, sugere a [skill hebe-brain](https://github.com/HericlisBezerra/hebe-brain) quando faltar, define a raiz central e distingue integrações disponíveis das próximas etapas. Instalar a skill não instala o visualizador HeBeBrain.
 
@@ -29,30 +29,19 @@ O conector do Codex e a autenticação do Git no terminal são mecanismos separa
 
 ```mermaid
 flowchart TB
-    U([Pedido e resultado esperado]) --> C[Coordenador<br/>escopo, riscos e critérios]
-    C --> X[AGENTS.md + Brain local<br/>decisões e contexto do produto]
-    X --> G[Meta e plano verificável]
-    G --> D{Há frentes independentes?}
-    D -->|Não| E[Execução focada]
-    D -->|Sim| A1[Agente de produto e pesquisa]
-    D -->|Sim| A2[Agente de engenharia]
-    D -->|Sim| A3[Agente visual]
-    A1 --> I[Integração pelo coordenador]
-    A2 --> I
-    A3 --> I
-    E --> I
-    I --> W{Mudou experiência web?}
-    W -->|Sim| P[Playwright<br/>fluxo, desktop, mobile e erros]
-    W -->|Não| V[Verificação proporcional]
-    P --> V
-    V --> S{Risco elevado?}
-    S -->|Sim| R[Revisão independente<br/>e segurança]
-    S -->|Não| K[Registrar evidências]
-    R --> K
-    K --> B[Atualizar Brain e decisões]
-    B --> F{Critérios atendidos?}
-    F -->|Não| G
-    F -->|Sim| Z([Entrega concluída])
+    U([Pedido ou retomada]) --> D[doctor + status / resume<br/>projeto, contrato e Brain]
+    D --> G[Plano + critérios observáveis<br/>meta nativa opcional]
+    G --> J[Shortlist local<br/>Jev explícito quando útil]
+    J --> A[Execução focada ou agentes em lotes<br/>coordenador integra]
+    A --> V[Verificação por artefato<br/>Playwright para superfície web]
+    V --> R{Revisão exige correção?}
+    R -->|Sim| A
+    R -->|Não| B[Checkpoint no Brain<br/>evidências e decisões]
+    B --> S[Estados separados<br/>implementação · verificação · commit · push · publicação]
+    S --> F{Critérios comprovados<br/>ou dispensados explicitamente?}
+    F -->|Sim| Z([Fechar e reportar evidências])
+    F -->|Pendência| G
+    F -->|Impedimento| H([Entrega parcial aberta<br/>checkpoint + próximo passo])
 
     classDef input fill:#0f172a,color:#fff,stroke:#38bdf8,stroke-width:2px;
     classDef control fill:#172554,color:#dbeafe,stroke:#60a5fa;
@@ -60,10 +49,10 @@ flowchart TB
     classDef verify fill:#052e2b,color:#ccfbf1,stroke:#2dd4bf;
     classDef memory fill:#3f2a09,color:#fef3c7,stroke:#f59e0b;
     class U,Z input;
-    class C,X,G,D,I,W,S,F control;
-    class A1,A2,A3,E agent;
-    class P,V,R verify;
-    class K,B memory;
+    class D,G,J,R,F control;
+    class A agent;
+    class V verify;
+    class B,S,H memory;
 ```
 
 ## Contrato compartilhado entre agentes
@@ -85,24 +74,38 @@ O orquestrador detecta configurações existentes e pode preparar um kit inicial
 python3 scripts/project_context.py web-init --path /caminho/projeto
 ```
 
+## Rotina diária e retomada
+
+O runtime local conserva uma entrega ativa por projeto, com objetivo, critérios, frentes, impedimentos, próximo passo e evidências. Ele não inicia agentes ou publica por conta própria.
+
+```sh
+python3 scripts/orchestrator.py configure --brain-home /caminho/central
+python3 scripts/orchestrator.py doctor --path /caminho/projeto
+python3 scripts/orchestrator.py start --path /caminho/projeto --objective 'Resultado esperado' --criterion 'critério=Comportamento observável'
+python3 scripts/orchestrator.py resume --path /caminho/projeto
+```
+
+`checkpoint` materializa o estado no Brain de modo idempotente. `close` exige critérios comprovados ou dispensados explicitamente, frentes concluídas e nenhum impedimento. Entregas parciais permanecem abertas para retomada.
+
 ## O que está incluído
 
 - Skill de orquestração e onboarding de HeBeBrain, Obsidian, GitHub e opção Jev.
 - Contrato `AGENTS.md`, bridge Claude e inicializador seguro por projeto.
 - Núcleo Python local: cadastro com UUID, relações entre projetos, eventos, proveniência e consolidação Markdown.
-- Coleta explícita de commits Git por caminho.
+- Runtime local: `configure`, `doctor`, `start`, `status`, `resume`, `update`, `checkpoint` e `close`.
+- Coleta explícita e paginada de commits Git por caminho; estados separados de commit, push e publicação.
 - Perfis de modelos e orientação para metas nativas e revisão proporcional ao risco.
 - Kit Playwright opcional para desktop/mobile e diagnóstico de falhas no navegador.
-- Conector TypeSafe/Jev: configuração local da chave, catálogo de modelos e avaliações explícitas.
+- Conector TypeSafe/Jev: configuração local protegida, prévia offline, catálogo de modelos e avaliações explícitas.
 - Mapas, arquitetura, exemplos e testes existentes do núcleo.
 
-**Próximas etapas:** captura contínua de conversas, worker permanente, sincronização automática GitHub, recuperação automática com Jev e runner Claude. A instalação não ativa esses recursos.
+**Próximas etapas:** captura contínua de conversas, worker permanente, sincronização automática GitHub, backup/restauração completos, recuperação automática com Jev e runner Claude. A instalação não ativa esses recursos.
 
 ## Conectar sua chave TypeSafe/Jev
 
 Na pasta `plugins/hebe-orchestrator-codex`, rode `python3 scripts/jev.py configure --web`. Abra o endereço local exibido, cole a chave no campo **Chave da API TypeSafe** e clique em **Conectar**. O catálogo oficial é consultado antes de salvar a credencial; nenhuma nota é enviada nesse passo.
 
-A credencial fica em `~/.config/hebe-brain/typesafe.json` com acesso restrito ao usuário. A variável `TYPESAFE_API_KEY` também é aceita e tem precedência. Os comandos `status`, `models` e `evaluate --file` estão descritos no [guia do plugin](plugins/hebe-orchestrator-codex/README.md#conectar-typesafejev).
+A credencial fica em `~/.config/hebe-brain/typesafe.json` com acesso restrito ao usuário. A variável `TYPESAFE_API_KEY` também é aceita e tem precedência. Use `preview --file` para validar a consulta sem credencial nem rede. Os comandos estão descritos no [guia do plugin](plugins/hebe-orchestrator-codex/README.md#typesafejev-explícito).
 
 A skill oficial TypeSafe é opcional como apoio ao desenvolvimento: `npx skills add typesafe-ai/skills --skill typesafe-ai` na pasta de trabalho, selecionando Codex. Ela não contém credenciais e não faz chamadas por ser instalada.
 
@@ -113,6 +116,7 @@ A skill oficial TypeSafe é opcional como apoio ao desenvolvimento: `npx skills 
 - [Contrato portátil de agentes](plugins/hebe-orchestrator-codex/skills/orchestrate-models/references/agent-contract.md)
 - [Validação web com Playwright](plugins/hebe-orchestrator-codex/skills/orchestrate-models/references/playwright.md)
 - [Arquitetura e evolução](plugins/hebe-orchestrator-codex/docs/ORCHESTRATOR-EVOLUCAO.md)
+- [Rotina diária e retomada](plugins/hebe-orchestrator-codex/skills/orchestrate-models/references/daily-runtime.md)
 - [Histórico de versões](plugins/hebe-orchestrator-codex/CHANGELOG.md)
 
 Para usar os exemplos do núcleo a partir deste checkout, entre primeiro em `plugins/hebe-orchestrator-codex`. O núcleo requer Python 3.10+ em macOS/Linux; a coleta de commits requer Git. A conta e o host determinam os modelos, os esforços, as ferramentas e a concorrência efetivamente disponíveis.

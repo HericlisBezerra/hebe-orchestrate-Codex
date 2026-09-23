@@ -31,13 +31,13 @@ Uma comparação representativa pode usar entregas reais com critérios iguais, 
 
 ## Concorrência e acompanhamento
 
-Usar o limite efetivo de slots da sessão, permissões e modelo de criação de subagentes. Muitos jobs são uma fila com dependências, não garantia de muitos processos simultâneos. Não criar processos externos para contornar limites do host. O coordenador integra resultados e controla conflitos de arquivos.
+Usar o limite efetivo de slots da sessão, permissões e modelo de criação de subagentes. Distribuir frentes em lotes conforme suas dependências; muitos jobs não garantem processos simultâneos. Não criar processos externos para contornar limites do host. O coordenador integra resultados e controla conflitos de arquivos. O registro de frentes em `orchestrator.py` não é um scheduler e não cria agentes.
 
-Para cada frente, informar modelo/esforço efetivos ou herdados, estado, evidência, escaladas e fallback. Se a ferramenta não expuser custo ou uso, marcar desconhecido; estimativas devem ser identificadas. Reutilizar agente é útil, mas não altera seu modelo automaticamente.
+Para cada frente, informar modelo/esforço efetivos ou herdados, estado, evidência, escaladas e fallback. Atualizar a entrega e fazer checkpoint nos marcos úteis. Se a ferramenta não expuser custo ou uso, marcar desconhecido; estimativas devem ser identificadas. Reutilizar agente é útil, mas não altera seu modelo automaticamente.
 
 ## Claude Code opcional
 
-Somente usar quando o provedor estiver conectado e autorizado para a tarefa. Preferir adapter estreito sobre CLI oficial (`claude -p`) ou Agent SDK, com resultado estruturado, status, cancelamento, contexto mínimo e limites por job. Conferir conta, modo de autenticação e modelos efetivamente acessíveis. A assinatura Claude não transfere créditos para OpenAI: a execução Claude usa seu próprio mecanismo de cobrança e limites.
+O runner Claude permanece futuro neste plugin. Se houver uma integração externa disponível e autorizada na sessão, conferir seu contrato antes de usar. Para futura implementação, preferir adapter estreito sobre CLI oficial (`claude -p`) ou Agent SDK, com resultado estruturado, status, cancelamento, contexto mínimo e limites por job. Conferir conta, autenticação e modelos efetivamente acessíveis. A assinatura Claude não transfere créditos para OpenAI: sua execução tem cobrança e limites próprios.
 
 A condição comercial precisa ser revalidada no onboarding: a atualização oficial consultada em setembro de 2026 registra a pausa da mudança anunciada e o uso de limites da assinatura por SDK/`-p`. Não presumir que esse arranjo vale para sempre, para todo modelo ou plano. `--bare` ignora OAuth/keychain e exige credencial API na conexão direta Anthropic; não usar esse modo como default para um bridge de assinatura. [Plano Claude e SDK](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan), [headless](https://code.claude.com/docs/en/headless)
 

@@ -17,27 +17,33 @@ Este arquivo orienta Codex, Claude Code, Grok e outros agentes que trabalham nes
 
 ## Como trabalhar
 
-1. Confirme escopo, restrições e evidências esperadas.
+1. Retome a configuração, o Brain e a entrega aberta antes de criar outro plano. Confirme escopo, restrições e critérios observáveis; meta nativa é opcional.
 2. Inspecione o estado atual antes de editar.
-3. Delegue apenas frentes independentes, com arquivos e critérios claros.
+3. Delegue apenas frentes independentes, com arquivos e critérios claros, em lotes compatíveis com os slots disponíveis.
 4. Mantenha um coordenador responsável por integrar mudanças e resolver conflitos.
-5. Verifique o comportamento alterado e corrija regressões encontradas dentro do escopo.
-6. Atualize decisões e Brain nos marcos relevantes.
+5. Verifique o artefato alterado e corrija regressões dentro do escopo. Achados da revisão retornam à implementação e à verificação afetada.
+6. Registre decisões, evidências, pendências e próximo passo nos checkpoints do Brain.
 
 ## Definição de concluído
 
-- O escopo aceito foi implementado.
-- As verificações relevantes passaram, ou as limitações estão descritas com evidência.
+- O resultado solicitado foi entregue e todos os critérios vigentes possuem evidência suficiente.
+- Um critério obrigatório pendente, falho ou não verificado mantém a entrega parcial, com impedimento e próximo passo registrados.
+- Uma dispensa de critério exige autorização explícita, referência e motivo. Reporte a dispensa; não a apresente como verificação aprovada.
 - Mudanças visuais foram inspecionadas no produto renderizado.
-- Commits locais e publicação remota são reportados separadamente.
+- Implementação, verificação, commit local, push e publicação são reportados separadamente, com suas próprias evidências.
 - O Brain contém somente fatos, decisões e evidências úteis para retomada.
 
 ## Aplicações web
 
-- Use Playwright quando a entrega depende do navegador e ele estiver disponível ou for material configurá-lo.
+- Use Playwright para a superfície web quando a entrega depende do navegador e ele estiver disponível ou for material configurá-lo. Outros artefatos usam suas verificações próprias.
 - Cubra o fluxo principal, um estado de falha relevante, desktop e mobile.
 - Observe erros de console, falhas de página e navegação.
 - Use traces e screenshots de falha para diagnóstico; adapte os testes à linguagem real do produto.
+
+## Diagnóstico do contexto
+
+- Distinga contrato presente no disco, aplicável ao caminho e carregado pelo host. Sem introspecção, o carregamento permanece não verificado (`host_loaded: unknown`).
+- Reutilize escolhas configuradas. Integrações opcionais não bloqueiam trabalho local independente.
 
 ## Segurança
 
@@ -54,4 +60,3 @@ Este arquivo orienta Codex, Claude Code, Grok e outros agentes que trabalham nes
 - Playwright: preencher quando aplicável.
 
 Criado pelo HeBe Orchestrator em {{DATE}}. Revise este contrato quando arquitetura, comandos ou critérios do produto mudarem.
-

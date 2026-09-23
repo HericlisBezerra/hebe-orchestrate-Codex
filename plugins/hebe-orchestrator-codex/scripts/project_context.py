@@ -90,18 +90,50 @@ def has_agents_import(path):
         raise ContextError("CLAUDE.md não está em UTF-8.") from None
 
 
+def nearest_playwright_config(root):
+    return next(((folder, name) for folder in (root, *root.parents)
+                 for name in PLAYWRIGHT_CONFIGS if existing_file(folder / name)), None)
+
+
 def status(root):
     agents = root / "AGENTS.md"
     claude = root / "CLAUDE.md"
-    playwright = next((name for name in PLAYWRIGHT_CONFIGS if existing_file(root / name)), None)
+    playwright_info = nearest_playwright_config(root)
+    package_file = next((folder / "package.json" for folder in (root, *root.parents)
+                         if existing_file(folder / "package.json")), None)
+    dependency = None
+    scripts = []
+    if package_file:
+        if package_file.stat().st_size > 1024 * 1024:
+            raise ContextError("package.json excede 1 MiB para inspeção local.")
+        try:
+            package = json.loads(package_file.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeError):
+            raise ContextError("package.json inválido ou fora de UTF-8.") from None
+        if not isinstance(package, dict):
+            raise ContextError("package.json precisa ser um objeto JSON.")
+        dependency = any(isinstance(package.get(section), dict) and "@playwright/test" in package[section]
+                         for section in ("dependencies", "devDependencies", "optionalDependencies"))
+        declared_scripts = package.get("scripts", {})
+        if isinstance(declared_scripts, dict):
+            scripts = sorted(name for name, command in declared_scripts.items()
+                             if isinstance(name, str) and isinstance(command, str) and "playwright" in command.lower())
     brain_markers = [name for name in ("Brain.md", "brain/INDEX.md", "vault/00-Indice.md")
                      if existing_file(root / name)]
+    applicable_agents = [str(folder / "AGENTS.md") for folder in reversed((root, *root.parents))
+                         if existing_file(folder / "AGENTS.md")]
     return {
         "project": str(root),
         "agents_md": existing_file(agents),
+        "applicable_agents": applicable_agents,
+        "host_loaded": "unknown",
         "claude_md": existing_file(claude),
         "claude_imports_agents": has_agents_import(claude) if claude.exists() else False,
-        "playwright_config": playwright,
+        "playwright_config": playwright_info[1] if playwright_info else None,
+        "playwright_config_path": str(playwright_info[0] / playwright_info[1]) if playwright_info else None,
+        "package_json_path": str(package_file) if package_file else None,
+        "playwright_dependency": dependency,
+        "playwright_scripts": scripts,
         "brain_markers": brain_markers,
     }
 
@@ -119,12 +151,13 @@ def initialize(root, name, claude_bridge):
 def web_initialize(root):
     if not existing_file(root / "package.json"):
         raise ContextError("web-init requer um projeto Node com package.json; adapte Playwright manualmente para outra stack.")
-    config = next((name for name in PLAYWRIGHT_CONFIGS if existing_file(root / name)), None)
+    config = nearest_playwright_config(root)
     if config:
-        config_action = "preserved_existing:" + config
+        config_action = "preserved_existing:" + os.path.relpath(config[0] / config[1], root)
+        smoke_action = "not_created_existing_config"
     else:
         config_action = write_new(root, "playwright.config.ts", template("playwright/playwright.config.ts"))
-    smoke_action = write_new(root, "tests/e2e/smoke.spec.ts", template("playwright/smoke.spec.ts"))
+        smoke_action = write_new(root, "tests/e2e/smoke.spec.ts", template("playwright/smoke.spec.ts"))
     return {
         "project": str(root),
         "actions": {"playwright_config": config_action, "tests/e2e/smoke.spec.ts": smoke_action},

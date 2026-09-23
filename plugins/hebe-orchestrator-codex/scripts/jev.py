@@ -128,6 +128,8 @@ def stored_credentials():
             fd = os.open(KEY_FILE, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
         except FileNotFoundError:
             return None
+        except OSError:
+            raise JevError("Arquivo de credenciais indisponível ou inseguro; configure novamente.") from None
         with os.fdopen(fd, "rb") as stream:
             safe_file(os.fstat(stream.fileno()))
             data = strict_json(stream.read(MAX_SETUP + 1), MAX_SETUP)
@@ -236,7 +238,7 @@ def description(value, nullable=False):
 
 def evaluation_input(filename, model_override):
     try:
-        fd = os.open(filename, os.O_RDONLY | os.O_NONBLOCK)
+        fd = os.open(filename, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise JevError("--file exige um arquivo JSON regular.")
@@ -273,6 +275,27 @@ def evaluation_input(filename, model_override):
     if not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", model):
         raise JevError("Identificador de modelo inválido.")
     return {"model": model, "state": data["state"], "questions": questions}
+
+
+def evaluation_preview(payload):
+    encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False,
+                         separators=(",", ":")).encode("utf-8")
+    kinds = {"noul": 0, "choice": 0, "score": 0}
+    for question in payload["questions"].values():
+        kinds[question["type"]] += 1
+    state = payload["state"]
+    state_type = "object" if isinstance(state, dict) else "array" if isinstance(state, list) else "string"
+    return {
+        "valid": True,
+        "network_used": False,
+        "credential_used": False,
+        "model": payload["model"],
+        "state_type": state_type,
+        "question_count": len(payload["questions"]),
+        "question_types": kinds,
+        "request_bytes": len(encoded),
+        "question_ids": list(payload["questions"]),
+    }
 
 
 def probability(value):
@@ -346,7 +369,7 @@ SETUP_HTML = r'''<!doctype html>
 <p class="small">Nenhuma nota do Brain será enviada. As avaliações só acontecem quando você as solicitar.<br>Arquivo local: <code>~/.config/hebe-brain/typesafe.json</code></p>
 </main><script nonce="__NONCE__">
 const form=document.getElementById('setup'),key=document.getElementById('key'),button=document.getElementById('connect'),status=document.getElementById('status');
-form.addEventListener('submit',async(event)=>{event.preventDefault();button.disabled=true;status.className='status';status.textContent='Validando conexão…';let value=key.value;key.value='';try{const response=await fetch('/configure',{method:'POST',headers:{'Content-Type':'application/json','X-HeBe-CSRF':'__TOKEN__'},body:JSON.stringify({api_key:value}),cache:'no-store',credentials:'omit',redirect:'error'});value='';const result=await response.json();if(!response.ok)throw new Error(result.error||'Conexão não confirmada.');status.textContent=result.message;button.textContent='Conectado';key.disabled=true;}catch(error){value='';status.className='status error';status.textContent=error.message==='Failed to fetch'?'A sessão local terminou. Abra configure --web novamente.':error.message;button.disabled=false;}});
+form.addEventListener('submit',async(event)=>{event.preventDefault();button.disabled=true;status.className='status';status.textContent='Validando conexão…';let value=key.value;key.value='';try{const response=await fetch('__CONFIGURE_PATH__',{method:'POST',headers:{'Content-Type':'application/json','X-HeBe-CSRF':'__TOKEN__'},body:JSON.stringify({api_key:value}),cache:'no-store',credentials:'omit',redirect:'error'});value='';const result=await response.json();if(!response.ok)throw new Error(result.error||'Conexão não confirmada.');status.textContent=result.message;button.textContent='Conectado';key.disabled=true;}catch(error){value='';status.className='status error';status.textContent=error.message==='Failed to fetch'?'A sessão local terminou. Abra configure --web novamente.':error.message;button.disabled=false;}});
 </script></body></html>'''
 
 
@@ -359,8 +382,12 @@ class SetupServer(http.server.HTTPServer):
 
 
 def configure_web():
+    capability = secrets.token_urlsafe(32)
+    setup_path = "/setup/" + capability
+    configure_path = setup_path + "/configure"
     token, nonce = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
-    page = SETUP_HTML.replace("__TOKEN__", token).replace("__NONCE__", nonce).encode("utf-8")
+    page = (SETUP_HTML.replace("__TOKEN__", token).replace("__NONCE__", nonce)
+            .replace("__CONFIGURE_PATH__", configure_path).encode("utf-8"))
     completed = False
     success = None
 
@@ -410,14 +437,14 @@ def configure_web():
             return True
 
         def do_GET(self):
-            if not self.allowed() or self.path != "/":
+            if not self.allowed() or self.path != setup_path:
                 self.reply(403, {"error": "Página local indisponível."})
                 return
             self.reply(200, page, "text/html; charset=utf-8")
 
         def do_POST(self):
             nonlocal completed, success
-            if not self.allowed(post=True) or self.path != "/configure":
+            if not self.allowed(post=True) or self.path != configure_path:
                 self.reply(403, {"error": "Requisição local recusada."})
                 return
             if self.headers.get_all("Content-Type", []) != ["application/json"] or self.headers.get("Transfer-Encoding"):
@@ -454,7 +481,7 @@ def configure_web():
         host = "127.0.0.1:%d" % server.server_port
         origin = "http://" + host
         server.timeout = 1
-        emit({"setup_url": origin + "/", "expires_in_seconds": SETUP_LIFETIME,
+        emit({"setup_url": origin + setup_path, "expires_in_seconds": SETUP_LIFETIME,
               "message": "Abra esta URL no navegador deste computador. Não envie a chave no chat."})
         deadline = time.monotonic() + SETUP_LIFETIME
         while not completed and time.monotonic() < deadline:
@@ -486,6 +513,9 @@ def main():
     configure.add_argument("--web", action="store_true", help="Mostra URL local temporária com formulário protegido.")
     sub.add_parser("status", help="Mostra somente presença e origem locais; não verifica conexão nem usa rede.")
     sub.add_parser("models", help="Consulta os modelos disponíveis na conta.")
+    preview = sub.add_parser("preview", help="Valida e resume o JSON localmente, sem credencial nem rede.")
+    preview.add_argument("--file", required=True, help="JSON regular com state, questions e model opcional (até 1 MiB).")
+    preview.add_argument("--model", help="Sobrescreve model do arquivo; padrão jev-latest.")
     evaluate = sub.add_parser("evaluate", help="Envia somente o JSON informado; pode consumir créditos TypeSafe.")
     evaluate.add_argument("--file", required=True, help="JSON regular com state, questions e model opcional (até 1 MiB).")
     evaluate.add_argument("--model", help="Sobrescreve model do arquivo; padrão jev-latest.")
@@ -493,6 +523,8 @@ def main():
     try:
         if args.command == "configure":
             emit(configure_web() if args.web else configure_terminal())
+        elif args.command == "preview":
+            emit(evaluation_preview(evaluation_input(args.file, args.model)))
         else:
             # Validate caller data before touching credentials or the network.
             payload = evaluation_input(args.file, args.model) if args.command == "evaluate" else None

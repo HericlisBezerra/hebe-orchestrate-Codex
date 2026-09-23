@@ -162,12 +162,14 @@ class BrainTests(unittest.TestCase):
             self.event("proposal", "decision.proposed", title="Ideia ainda em discussão"),
             self.event("implemented", "implementation.completed", title="Alteração implementada"),
             self.event("accepted", "decision.accepted", title="Escolha aprovada"),
-            self.event("superseded", "decision.superseded", title="Escolha alterada", supersedes="accepted"),
+            self.event("replacement", "decision.accepted", title="Nova escolha aprovada"),
+            self.event("superseded", "decision.superseded", title="Escolha alterada", supersedes="accepted", replacement="replacement"),
         ])
         self.brain.consolidate()
         decisions = Path(self.registered["decisions_path"]).read_text()
         self.assertIn("Escolha aprovada", decisions)
         self.assertIn("substituída", decisions)
+        self.assertIn("substituída por [Nova escolha aprovada]", decisions)
         self.assertNotIn("Ideia ainda em discussão", decisions)
         self.assertNotIn("Alteração implementada", decisions)
         self.assertNotIn("Escolha alterada", decisions)
@@ -177,9 +179,67 @@ class BrainTests(unittest.TestCase):
         second.mkdir()
         other_id = self.brain.register(second, "Outro")["project_id"]
         self.brain.record(self.event("accepted", "decision.accepted"))
+        self.brain.record(self.event("replacement", "decision.accepted", title="Nova decisão"))
         with self.assertRaises(BrainError):
-            self.brain.record(self.event("superseded", "decision.superseded", project_id=other_id, supersedes="accepted"))
+            self.brain.record(self.event("superseded", "decision.superseded", project_id=other_id,
+                                         supersedes="accepted", replacement="replacement"))
+        self.assertEqual(self.brain.status()["events"], 2)
+
+    def test_replacement_must_be_preexisting_accepted_decision(self):
+        self.brain.record(self.event("old", "decision.accepted"))
+        missing = self.event("superseded", "decision.superseded", supersedes="old", replacement="new")
+        with self.assertRaises(BrainError):
+            self.brain.record([self.event("new", "decision.proposed"), missing])
         self.assertEqual(self.brain.status()["events"], 1)
+        with self.assertRaises(BrainError):
+            self.brain.record(self.event("same", "decision.superseded", supersedes="old", replacement="old"))
+        self.brain.record(self.event("new", "decision.accepted", title="Substituta"))
+        self.assertEqual(self.brain.record(missing)["inserted"], 1)
+        self.assertEqual(self.brain.record(missing)["duplicates"], 1)
+        with self.assertRaises(BrainError):
+            self.brain.record(self.event("again", "decision.superseded", supersedes="old", replacement="new"))
+        with self.assertRaises(BrainError):
+            self.brain.record(self.event("cycle", "decision.superseded", supersedes="new", replacement="old"))
+
+    def test_legacy_supersession_is_preserved_without_inventing_replacement(self):
+        self.brain.record([
+            self.event("old", "decision.accepted", title="Decisão histórica"),
+            self.event("new", "decision.accepted", title="Possível decisão nova"),
+            self.event("superseded", "decision.superseded", supersedes="old", replacement="new"),
+        ])
+        with self.brain.connection() as conn:
+            payload = json.loads(conn.execute("SELECT payload_json FROM events WHERE event_id='superseded'").fetchone()[0])
+            payload.pop("replacement")
+            conn.execute("UPDATE events SET payload_json=? WHERE event_id='superseded'", (json.dumps(payload),))
+        self.brain.consolidate()
+        decisions = Path(self.registered["decisions_path"]).read_text()
+        self.assertIn("substituição legada sem decisão vigente vinculada", decisions)
+        self.assertNotIn("substituída por [Possível decisão nova]", decisions)
+
+        repaired = self.event("superseded-repair", "decision.superseded",
+                              supersedes="old", replacement="new")
+        self.brain.record(repaired)
+        self.brain.consolidate(self.project_id)
+        decisions = Path(self.registered["decisions_path"]).read_text()
+        self.assertIn("substituída por [Possível decisão nova]", decisions)
+
+    def test_push_and_publication_have_distinct_evidence_and_history(self):
+        with self.assertRaises(BrainError):
+            self.brain.record(self.event("bad-push", "push.completed", remote="origin"))
+        with self.assertRaises(BrainError):
+            self.brain.record(self.event("bad-publication", "publication.completed",
+                                         url="file:///tmp/result", revision="abc123"))
+        pushed = self.event("push:1", "push.completed", remote="origin/main", revision="abc123")
+        pushed["source"] = "grok"
+        published = self.event("publish:1", "publication.completed", url="https://example.invalid/app", revision="abc123")
+        self.brain.record([pushed, published])
+        self.brain.consolidate()
+        history = (self.project / "vault/04-Engenharia/Entregas.md").read_text()
+        self.assertIn("origin/main", history)
+        self.assertIn("https://example.invalid/app", history)
+        self.assertIn("push.completed", history)
+        self.assertIn("publication.completed", history)
+        self.assertFalse((self.project / "vault/04-Engenharia/Commits.md").exists())
 
     def test_batches_rollback_on_unknown_project_and_invalid_payload(self):
         with self.assertRaises(BrainError):

@@ -1,6 +1,14 @@
 # Metas de entrega
 
-Ler ao sugerir ou operar uma meta para uma entrega com várias frentes. Uma meta explicita o resultado e permite acompanhar trabalho incompleto; o plano de uma tarefa simples não precisa virar meta.
+Ler ao sugerir ou operar uma meta para uma entrega com várias frentes. O plano e os critérios persistem no [runtime local](daily-runtime.md); a meta nativa é uma opção de continuidade do host. Uma tarefa simples não precisa virar meta.
+
+## Contrato de conclusão comum
+
+- **Conclusão comprovada:** todos os critérios vigentes têm evidência suficiente e não há impedimentos ou frentes obrigatórias incompletas.
+- **Entrega parcial:** algum critério obrigatório está pendente, falhou ou não foi verificado. Registrar estado, impedimento e próximo passo com `update` e `checkpoint`; a entrega permanece aberta.
+- **Critério dispensado explicitamente:** usar `waived` com evidência da autorização e justificativa. Reportar a dispensa separadamente; não marcar como `passed` nem tratar como teste aprovado.
+
+`orchestrator.py close` aceita `passed` ou `waived` com evidência, exige frentes concluídas e zero impedimentos. Ele fecha o registro local e faz checkpoint; não altera a meta nativa. A conclusão da meta deve corresponder ao objetivo vigente: se a dispensa alterar a condição original, reconciliar essa mudança antes de declarar a meta atingida.
 
 ## Propor sem ativar implicitamente
 
@@ -55,6 +63,6 @@ Respeitar os limites de condição e as capacidades da versão instalada. Tempo 
 
 ## Sem suporte nativo
 
-Usar um plano persistente no projeto com objetivo, entregáveis, critérios, estado de cada frente, evidências, impedimentos e próximo passo. Identificá-lo como plano local, sem alegar uma meta ativa no aplicativo. Não instalar um scheduler nem criar automação recorrente para simular uma meta sem pedido específico do usuário.
+Usar `start`, `update`, `checkpoint` e `resume` do runtime para manter objetivo, critérios, estado das frentes, evidências, impedimentos e próximo passo ligados ao projeto. Sem esse runtime, manter um plano local legível dentro do escopo autorizado e informar o modo. Nenhum dos dois comprova meta nativa ativa. Não instalar scheduler nem criar automação recorrente para simular uma meta sem pedido específico.
 
 Uma anotação local não garante continuidade depois do turno. Informar o que terminou e o que pode ser retomado. Se existir uma automação explicitamente configurada, reportar seu alcance real sem transformar toda entrega em monitoramento permanente.

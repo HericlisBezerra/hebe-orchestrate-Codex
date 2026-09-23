@@ -1,82 +1,68 @@
-# Primeira configuração do Orquestrador HeBe
+# Entrada rápida e configuração completa
 
-Ler quando o usuário configurar o orquestrador ou quando o primeiro trabalho que precisa de memória não tiver escolhas conhecidas. Este é um fluxo conversacional executado pelo agente. Não há assistente gráfico, hook de instalação ou serviço que faça perguntas ao instalar o plugin.
+Ler quando faltar configuração necessária à rotina ou quando o usuário pedir configurar, conectar ou revisar o setup. A skill conduz esse fluxo na conversa; instalar o plugin não inicia assistente, hook ou serviço.
 
-## Começar pela situação observada
+## Entrada rápida: trabalhar com o contexto existente
 
-Inspecionar as capacidades da sessão, o diretório atual e os índices/configurações já indicados pelo usuário. Verificar Brains existentes e skills disponíveis no host atual. Não varrer todos os documentos pessoais para fazer onboarding. Reutilizar respostas desta conversa e, quando existir, `<raiz-central>/SETUP.md`.
+1. Inspecionar diretório, capacidades e configurações já indicadas. Resolver a instalação ativa e chamar `orchestrator.py doctor --path <projeto>`; consultar `status` ou `resume` conforme [daily-runtime.md](daily-runtime.md).
+2. Reutilizar central, UUID, contrato e entrega já existentes. Ler o Brain local e decisões pertinentes. Não varrer documentos pessoais para localizar um setup nem criar outra central por falta de contexto.
+3. Se faltar informação necessária, resolver somente essa lacuna. Sem raiz conhecida, perguntar pelo destino existente antes de propor outro. Uma opção GitHub, Jev ou Obsidian adiada não bloqueia o trabalho local independente.
+4. Durante setup autorizado, usar `configure --brain-home <central>`, conferir o estado do núcleo e registrar apenas projetos reais. `brain.py` mantém seu `--home` explícito. Consultar [brain-and-github.md](brain-and-github.md) para adoção e registro.
+5. Ler o contrato aplicável conforme [agent-contract.md](agent-contract.md). Presença e aplicabilidade não comprovam carregamento pelo host: sem introspecção, `host_loaded` é `unknown`. Criar ou revisar contratos quando isso estiver no escopo autorizado.
 
-Apresentar um resumo curto: recurso, estado observado e próximo passo. Usar estados distintos como disponível, configurado, adiado, não implementado e não verificado. Uma preferência não comprova instalação; autenticação não comprova acesso ao repositório; uma pasta Markdown não comprova captura automática.
+Apresentar um resumo curto com projeto, entrega retomada, pendência concreta e próximo passo. Uma tarefa simples segue execução direta. Para trabalho composto, registrar objetivo e critérios com `start`; uma entrega ativa por projeto. Meta nativa é opcional e segue [delivery-goals.md](delivery-goals.md).
 
-Mostrar o [mapa do projeto](../../../docs/MAPA-DO-PROJETO.md) no primeiro onboarding completo e quando solicitado. Agrupar somente perguntas independentes; não bloquear trabalho local já autorizado por escolhas opcionais. Não repetir etapas concluídas a cada conversa.
+Sem uma central configurada, o agente pode continuar trabalho autorizado e consultar Markdown existente, informando que a persistência pelo runtime ainda está pendente. Não apresentar esse modo como captura ou retomada automática.
 
-## 0. AGENTS.md — contrato portátil do projeto
+## Configuração completa: escolhas por instalação
 
-Antes de criar memória ou delegar trabalho, executar `python3 scripts/project_context.py status --path <projeto>` ou inspecionar os arquivos equivalentes. Ler [agent-contract.md](agent-contract.md).
+Usar este percurso quando o usuário pedir o setup completo ou a revisão de integrações. Mostrar o [mapa](../../../docs/MAPA-DO-PROJETO.md), reaproveitar a entrada rápida e conduzir somente escolhas pendentes. Agrupar perguntas independentes e aproveitar autorizações já dadas para cada destino.
 
-Se `AGENTS.md` existir, preservar suas regras e completar somente lacunas verificadas. Se faltar durante um setup autorizado, criar a base com `python3 scripts/project_context.py init --path <projeto>`. O comando não sobrescreve arquivos existentes e cria um `CLAUDE.md` com `@AGENTS.md` quando ainda não há um. Se já houver `CLAUDE.md` sem o import, preservar e apresentar a pendência.
+### 1. Skill hebe-brain e contrato
 
-O mesmo `AGENTS.md` serve de contrato para Codex, Claude Code e Grok. Preencher objetivo, comandos e definição de concluído com dados reais do projeto. Em produto web, detectar Playwright; quando a validação no navegador for material, oferecer `web-init` e adaptar o teste ao fluxo real antes da execução.
+Verificar o catálogo do host e os caminhos pertinentes. Se `hebe-brain` estiver disponível, ler seu `SKILL.md` ao adotar ou alterar a estrutura. Uma cópia em `~/.claude/skills` pode servir de referência, mas não comprova descoberta no Codex.
 
-## 1. Skill hebe-brain — antes de montar ou migrar o Brain
+Se faltar, sugerir a fonte [HericlisBezerra/hebe-brain](https://github.com/HericlisBezerra/hebe-brain), pasta `hebe-brain/`. Verificar acesso, revisão e `SKILL.md` antes de instalar. No Codex, usar a skill `skill-installer` quando disponível; seu helper aceita `--repo HericlisBezerra/hebe-brain --path hebe-brain`. Um pacote `.skill` não é uma pasta instalável pelo helper de GitHub. Preservar instalações existentes e esclarecer divergências antes de substituí-las.
 
-Verificar o catálogo de skills do host e os caminhos locais pertinentes. Se existir uma instalação aplicável, ler `SKILL.md`, preservar seu formato e registrar sua origem. Uma cópia em `~/.claude/skills` pode ser lida como referência, mas não significa que esteja instalada ou descoberta no Codex.
+Um 404 autenticado não prova inexistência: conferir conta/organização e acesso ao repositório. Se o acesso faltar, continuar com o núcleo local ou a cópia verificada. Instalar a skill não instala o visualizador, configura backup ou conecta Jev.
 
-Se faltar no host atual, sugerir sua instalação neste momento, com a fonte exata verificada. Separar o repositório que distribui a skill do repositório privado usado como backup do conhecimento. A instalação da skill não configura backup, captura nem Jev.
+Para o projeto, preservar `AGENTS.md` e `CLAUDE.md` existentes. Durante setup autorizado, `project_context.py init --path <projeto>` cria somente arquivos ausentes; se houver `CLAUDE.md` sem o import aplicável, preservar e registrar a pendência. Preencher objetivo, comandos e critérios com dados reais.
 
-Fonte oficial: [HericlisBezerra/hebe-brain](https://github.com/HericlisBezerra/hebe-brain), pasta [`hebe-brain/`](https://github.com/HericlisBezerra/hebe-brain/tree/main/hebe-brain), com `SKILL.md`. No Codex, o helper de `skill-installer` aceita `--repo HericlisBezerra/hebe-brain --path hebe-brain`. Verificar acesso e revisão atual antes de instalar; o repositório pode exigir acesso concedido pelo proprietário. Um 404 autenticado não prova inexistência: conferir se o conector foi instalado na conta/organização proprietária e recebeu acesso a esse repositório. Não pedir novamente um link que já está definido.
+### 2. HeBeBrain, Obsidian e central
 
-Antes de instalar, verificar o repositório, a revisão e a pasta que contém `SKILL.md`. Usar `skill-installer` quando disponível e ler suas instruções. Um arquivo `.skill` compactado não é uma pasta instalável pelo helper de GitHub; não inventar um caminho de instalação. Se só houver um pacote, inspecionar sua estrutura e preparar a instalação compatível. Preservar instalações existentes e informar qualquer divergência entre a fonte local e remota antes de substituí-las.
+Recomendar **HeBeBrain**: Brain/vault em Markdown com visualizador próprio quando instalado. Oferecer Obsidian existente ou ambos sobre a mesma base antes de criar a central. Não criar duas fontes editáveis do conhecimento.
 
-Se não houver acesso à fonte, explicar a autorização de repositório que falta e continuar com o núcleo local ou a cópia local já verificada. Ausência da skill não impede leitura de Markdown nem o CLI Brain já incluído no plugin.
+- **HeBeBrain:** escolher uma pasta compartilhada pelos hosts, por exemplo `~/.codex/hebe-brain`. Verificar skill, núcleo e visualizador separadamente. Não abrir um localhost presumido quando o visualizador faltar.
+- **Obsidian existente:** reaproveitar o vault informado e resolver a subpasta exata; preservar notas, plugins e convenções.
+- **Ambos:** apontar para os mesmos arquivos autorizados e manter consolidação por um escritor.
+- **Decidir depois:** continuar trabalho independente e registrar a configuração pendente.
 
-## 2. HeBeBrain, Obsidian e raiz central — antes de `init`
+A central mantém índice e contexto transversal. Os Brains de projetos/subprojetos permanecem junto às suas fontes. Perguntar pela central uma vez; rever o destino apenas quando um projeto novo ou uma divergência exigir.
 
-Apresentar **HeBeBrain como opção principal**: organização em Markdown com Brain/vault e visualizador próprio quando instalado. Obsidian é uma alternativa para quem já usa; ambos podem abrir a mesma base se o usuário quiser. Não instalar Obsidian como dependência do HeBeBrain nem criar duas cópias editáveis do conhecimento.
+### 3. GitHub opcional
 
-Pergunta sugerida: **“Recomendo HeBeBrain. Você quer usá-lo sozinho, aproveitar seu Obsidian existente ou usar os dois sobre a mesma base?”** Depois, resolver a pasta central ainda não definida.
+Depois de resolver o armazenamento local, oferecer versionamento e envio manual conforme [brain-and-github.md](brain-and-github.md#sugerir-e-conectar-github). Reutilizar a integração existente e verificar conta, acesso e destino; não reinstalar por rotina.
 
-- **HeBeBrain (recomendado):** sugerir uma pasta central compartilhada por Codex e Claude, por exemplo `~/.codex/hebe-brain`. Conferir separadamente a presença da skill, do núcleo de memória e do visualizador. Este plugin inclui o núcleo; instalar a skill não instala nem inicia o visualizador. Se ele faltar, informar a disponibilidade real em vez de abrir um endereço localhost presumido.
-- **Obsidian existente:** aproveitar caminhos já informados; se houver ambiguidade, pedir o vault e a subpasta exata. Mostrar o destino completo antes da escrita. Preservar o vault, seus plugins e suas convenções. Obsidian instalado não significa que o usuário queira usá-lo aqui.
-- **Ambos:** apontar as duas interfaces para os mesmos arquivos autorizados; manter um escritor de consolidação e preservar notas e configurações existentes.
-- **Decidir depois:** continuar a entrega sem inicializar uma central em local presumido. Informar que a persistência central está pendente.
+Definir proprietário, repositório, visibilidade e conjunto de arquivos antes de enviar. Reutilizar autorização para aquele destino. Instalação, autenticação, acesso, commit, push e restauração comprovada são estados distintos. **Sync e backup/restauração completos ainda são futuros.** Um repositório preparado ou um envio manual não comprova recuperação da base inteira.
 
-A central organiza o índice e o conhecimento transversal; os Brains de projetos/subprojetos continuam junto às suas fontes. Perguntar pela central uma vez e pelo destino local apenas quando um projeto novo ou uma divergência exigir isso. Não mover todos os vaults para dentro da central.
+### 4. TypeSafe/Jev opcional
 
-Com a raiz e a escrita autorizadas, usar `status`, `init`, `register` e `context` conforme [brain-and-github.md](brain-and-github.md). Registrar apenas projetos reais dentro do escopo; manter o UUID e a relação explícita com o pai.
+Oferecer avaliações explícitas com Jev ou manter consultas locais. Instalação da skill, configuração da credencial e autorização para enviar conteúdo são estados distintos.
 
-## 3. GitHub — depois de definir o armazenamento local
+Carregar a skill oficial `typesafe-ai` quando disponível e ler [typesafe-jev.md](typesafe-jev.md). Se faltar, verificar a [fonte oficial](https://github.com/typesafe-ai/skills) e usar um método de instalação autorizado; não reinstalar uma cópia já descoberta.
 
-Oferecer versionamento/backup como opção, usando o fluxo de [brain-and-github.md](brain-and-github.md#sugerir-e-conectar-github). Se já conectado, verificar conta e acesso ao destino; não sugerir reinstalação.
+1. Chamar `jev.py status` para observar presença e origem locais, sem imprimir o arquivo de segredo.
+2. Se configurado, reutilizar a credencial e consultar `jev.py models` para verificar autenticação; não pedir outra chave por rotina.
+3. Se faltar credencial e a conexão estiver autorizada, abrir `jev.py configure --web`. O usuário insere a chave na página local, fora da conversa. `jev.py configure` oferece prompt oculto no terminal. O catálogo é consultado antes de salvar; nenhuma nota é enviada nessa etapa.
+4. Registrar conectado somente após resposta autenticada válida, com data e origem. Presença da chave significa configurado, não conexão verificada.
+5. Para inferência, preparar `state`, `model` e `questions` em um JSON autorizado. Começar com conteúdo sintético quando fizer demonstração; não inferir autorização para enviar conversas ou vaults inteiros. Reranking integrado ao Brain ainda é futuro.
 
-Se faltar a integração, procurar e sugerir o plugin GitHub pelo ID real retornado pelo catálogo. Definir proprietário, repositório, visibilidade e conjunto de arquivos antes de enviar. Reutilizar autorização já dada para esse destino. A versão atual permite preparar o destino e conduzir envios manuais com ferramentas disponíveis; sincronização contínua ainda não está implementada.
+`TYPESAFE_API_KEY` tem precedência sobre `~/.config/hebe-brain/typesafe.json`. O diretório usa `0700` e o arquivo `0600`, pertencentes ao usuário; o arquivo não é criptografado. Nunca guardar a chave em argumentos, chat, Brain, `SETUP.md`, logs ou Git. Entrada genérica do onboarding não é campo de segredo.
 
-## 4. Jev — preferência agora, chave na ativação funcional
+### 5. Evidência e retomada do setup
 
-No onboarding completo, oferecer **“Quer conectar TypeSafe/Jev para avaliações explícitas, ou manter as consultas locais?”**. Confirmar o provedor somente se não estiver definido. Reutilizar a escolha e a autorização existentes; instalação da skill, credencial válida e envio de conteúdo são etapas distintas.
+A configuração operacional da central é persistida por `configure`. Preservar um `SETUP.md` existente como registro legível das escolhas humanas e integrações: origem da skill por host, interface, conta/repositório e política GitHub, estado Jev, itens adiados e próxima ação. `brain.py` não interpreta esse Markdown como configuração.
 
-Carregar a skill oficial `typesafe-ai` quando disponível e ler [typesafe-jev.md](typesafe-jev.md). Se faltar, usar a [fonte oficial](https://github.com/typesafe-ai/skills) e um único método de instalação autorizado; não reinstalar uma cópia já descoberta. A skill orienta as perguntas e a integração, mas não autentica a API.
+Usar estados observáveis: disponível, configurado, verificado, adiado, não implementado e não verificado. Cada integração verificada aponta para evidência e data. Não repetir o onboarding a cada conversa; rever somente a etapa afetada por mudança de conta, caminho ou falha.
 
-**O conector `scripts/jev.py` oferece configuração e chamadas explícitas.** Recuperação automática de contexto, classificação contínua e roteamento com o Brain ainda são etapas futuras. Na pasta do plugin, conduzir a ativação assim:
-
-1. Executar `python3 scripts/jev.py status`. O comando verifica configuração local; não ler nem imprimir o conteúdo do arquivo de segredo.
-2. Se já houver credencial, reutilizá-la e consultar `python3 scripts/jev.py models` para verificar autenticação e catálogo. Não pedir outra chave por rotina. Falha de autenticação exige corrigir a fonte indicada.
-3. Se faltar credencial e a conexão estiver autorizada, executar `python3 scripts/jev.py configure --web`. O usuário abre o endereço local exibido e insere a chave no formulário, fora da conversa. A alternativa é `python3 scripts/jev.py configure`, com prompt oculto no terminal. Esses fluxos consultam `GET /v1/models` antes de salvar. Também é suportado o usuário editar localmente apenas o campo `api_key` do arquivo `~/.config/hebe-brain/typesafe.json`, preservando a permissão `0600`; não ler esse arquivo em tool output. Após edição manual, executar `python3 scripts/jev.py models` para verificar a chave. A consulta ao catálogo não envia notas do Brain.
-4. Registrar “conectado” somente após resposta autenticada válida, com data e origem da configuração. A presença da chave, sozinha, significa apenas “configurado”; arquivo vazio não comprova configuração.
-5. Para inferência, preparar um JSON com `state`, `model` e `questions` conforme a referência e executar `python3 scripts/jev.py evaluate --file <arquivo.json>` somente no escopo já autorizado. Recuperar trechos localmente, enviar apenas o necessário e manter seleção local quando o serviço estiver indisponível. Usar conteúdo sintético para uma primeira demonstração, sem inferir autorização para enviar conversas ou vaults inteiros.
-
-O conector aceita `TYPESAFE_API_KEY` no ambiente, com precedência sobre `~/.config/hebe-brain/typesafe.json`. O arquivo local fica fora do projeto, com permissão `0600`, dentro de `~/.config/hebe-brain` com `0700`, pertencentes ao usuário; isso não é armazenamento criptografado. Não colocar o valor da chave em argumentos, chat, `Brain.md`, vault, `SETUP.md`, logs ou Git. Registrar somente a referência ao mecanismo, o estado e a data. Uma pergunta genérica do onboarding não é campo para segredo.
-
-## 5. Escopo e meta — antes da entrega composta
-
-Preparar objetivo, entregáveis e critérios. Sugerir a meta nativa quando útil e seguir [delivery-goals.md](delivery-goals.md). Só criar após pedido ou aceitação explícita. A meta acompanha a entrega; sua conclusão depende das evidências de todos os critérios. Não transformar o pedido de onboarding em uma meta de implementação de todo o roadmap.
-
-## Encerrar e retomar o setup
-
-Após a raiz ser escolhida e a escrita estar autorizada, manter um resumo sem segredos em `<raiz-central>/SETUP.md`, preservando conteúdo existente. Esse documento é lido/atualizado pelo agente; o CLI `brain.py` não o interpreta como configuração automática.
-
-Registrar somente escolhas do setup: raiz central, uso de Obsidian, origem e disponibilidade da skill por host, conta/repositório e política GitHub, estado Jev, itens adiados e próxima ação. Cada capacidade ativa deve apontar para evidência e data. Preferência, configuração e verificação ficam separadas. Não escrever na memória interna gerenciada pelo Codex ou Claude.
-
-Sem raiz escolhida, manter o resumo na conversa e informar essa pendência. Em outra sessão, se não houver configuração acessível nem contexto anterior, pedir a raiz existente antes de propor criar outra. Falhas e mudança de projeto/conta podem exigir rever só a etapa afetada.
-
-Finalizar com o que está utilizável, o que aguarda escolha e o que aguarda implementação. Contrato `AGENTS.md`, Playwright, instalação do plugin, skill hebe-brain, registro de projetos, GitHub e Jev são resultados distintos.
+Finalizar com o que está utilizável e o que está pendente. Contrato, runtime, Brain, skill hebe-brain, Playwright, GitHub e Jev são capacidades diferentes. Uma configuração concluída não equivale a uma entrega de produto concluída.

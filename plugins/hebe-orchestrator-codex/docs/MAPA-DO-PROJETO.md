@@ -1,104 +1,117 @@
 # Mapa do HeBe Orchestrator
 
-Na versão **0.6.0**, `AGENTS.md` define o contrato portátil do projeto, a skill conduz a coordenação e os comandos locais registram contexto, eventos, notas e commits. O kit Playwright prepara evidências web e o conector TypeSafe/Jev oferece chamadas explícitas. Instalar o plugin não inicia captura contínua nem conecta serviços.
+Na versão **0.7.0**, a rotina começa por localizar o projeto e retomar seu estado. `scripts/orchestrator.py` persiste configuração, critérios, frentes e checkpoints; a skill coordena execução e verificação com as ferramentas do host. O fluxo abaixo orienta o agente: não representa um scheduler ou serviços ativados pela instalação.
 
-## Primeira configuração
+## Entrada rápida ou configuração completa
 
-O [onboarding](../skills/orchestrate-models/references/onboarding.md) começa no primeiro uso e reutiliza escolhas já feitas. Recomendar HeBeBrain e escolher entre ele, Obsidian existente ou ambos vem **antes de definir ou criar a raiz central**.
-
-```mermaid
-flowchart TD
-    A["Primeiro uso<br/>Conferir configuração existente"] --> M{"AGENTS.md disponível<br/>na raiz do projeto?"}
-    M -->|Sim| N["Preservar contrato e regras locais<br/>Conferir bridge Claude"]
-    M -->|Não| Y["Criar contrato portátil<br/>Codex · Claude · Grok"]
-    Y --> N
-    N --> B{"hebe-brain disponível<br/>no host atual?"}
-    B -->|Sim| C["Consultar convenções disponíveis<br/>Preservar Brains e notas existentes"]
-    B -->|Não| D["Sugerir instalação pela origem confirmada<br/>Instalar se autorizado ou seguir com pendência"]
-    D --> C
-    C --> O{"HeBeBrain recomendado<br/>Obsidian existente ou ambos?"}
-    O -->|Obsidian| V["Escolher o vault e a pasta central<br/>Preservar suas notas"]
-    O -->|HeBeBrain| L["Escolher a pasta central<br/>Conferir visualizador disponível"]
-    O -->|Ambos| T["Duas interfaces<br/>Mesma base Markdown"]
-    T --> R
-    O -->|Decidir depois| Q["Continuar a tarefa<br/>Central ainda não configurada"]
-    V --> R["Raiz escolhida<br/>CLI: status e init quando necessário"]
-    L --> R
-    R --> P["CLI: register por projeto/subprojeto<br/>Relacionar pais explicitamente"]
-    P --> G["GitHub opcional<br/>Reutilizar conexão ou orientar instalação<br/>Conferir conta, repositório e autorização"]
-    G --> J{"Conectar TypeSafe/Jev?"}
-    J -->|Sim, já configurado| S["Reutilizar credencial<br/>Consultar modelos quando necessário"]
-    J -->|Sim, falta chave| K["Abrir configuração local<br/>Usuário cola chave fora do chat<br/>Validar catálogo e salvar credencial"]
-    J -->|Depois| F["Conferir configuração local<br/>Mostrar escolhas, pendências e limites"]
-    S --> F
-    K --> F
-```
-
-A instalação da skill `hebe-brain`, quando ausente, é uma etapa orientada pelo agente e pelos recursos do host. A fonte é [HericlisBezerra/hebe-brain](https://github.com/HericlisBezerra/hebe-brain), pasta `hebe-brain/`. Verificar o acesso ao repositório e a revisão antes de instalar. A leitura de Markdown e o núcleo local podem avançar enquanto a instalação estiver pendente.
-
-GitHub já conectado **não precisa ser reinstalado**. Instalação, autenticação, acesso ao repositório e envio são estados distintos. Após escolher a raiz, o usuário pode adotar um destino privado para backup; criação e push seguem a autorização existente para aquele destino. O sync automático ainda não existe.
-
-Ao escolher Jev, usar `python3 scripts/jev.py status`. Se faltar credencial, abrir `python3 scripts/jev.py configure --web`: o usuário insere a chave no formulário local, e o conector consulta o catálogo TypeSafe antes de salvar. `TYPESAFE_API_KEY` também é aceito. A chave fica fora do Brain, dos prompts e do Git. A configuração consulta modelos; as avaliações enviam apenas o conteúdo explicitamente selecionado. Recuperação automática e captura contínua ainda são etapas futuras.
-
-## Ciclo vertical de entrega, agentes e memória
-
-O Brain do subprojeto vem primeiro. Consultar o pai e a central conforme a necessidade; `--parent` não incorpora automaticamente registros de irmãos ou o conteúdo do pai.
+A entrada rápida aproveita o que já existe. A configuração completa é usada quando o usuário pede setup ou revisão das integrações. Recomendar HeBeBrain; oferecer Obsidian existente ou ambos sobre a mesma base antes de criar uma central. Escolhas opcionais podem ficar adiadas.
 
 ```mermaid
 flowchart TB
-    A(["Pedido e resultado esperado"]) --> B["Coordenador<br/>escopo, risco e critérios"]
-    B --> C["AGENTS.md + Brain local<br/>decisões e contexto do produto"]
-    C --> D["Meta e plano verificável"]
-    D --> E{"Há frentes independentes?"}
-    E -->|Não| F["Execução focada"]
-    E -->|Sim| A1["Agente de produto<br/>pesquisa e requisitos"]
-    E -->|Sim| A2["Agente de engenharia<br/>implementação"]
-    E -->|Sim| A3["Agente visual<br/>interface e referência"]
-    A1 --> G["Integração pelo coordenador"]
-    A2 --> G
-    A3 --> G
-    F --> G
-    G --> W{"Mudou experiência web?"}
-    W -->|Sim| PW["Playwright<br/>jornada, desktop, mobile<br/>erros, traces e screenshots"]
-    W -->|Não| V["Verificação proporcional"]
-    PW --> V
-    V --> S{"Risco elevado?"}
-    S -->|Sim| R["Revisão independente<br/>e segurança"]
-    S -->|Não| H["Registrar evidências"]
-    R --> H
-    K["git_events.py<br/>commits observados"] --> H
-    H --> I["Atualizar Brain e decisões<br/>preservar origem"]
-    I --> J{"Todos os critérios<br/>comprovados?"}
-    J -->|Não, há avanço possível| D
-    J -->|Impedimento concreto| P["Registrar retomada<br/>e estado incompleto"]
-    J -->|Sim| Z(["Entrega concluída"])
+    A(["Abrir projeto ou retomar pedido"]) --> D["doctor<br/>Projeto · contrato · Brain · estado"]
+    D --> R{"Configuração suficiente<br/>para o trabalho atual?"}
+    R -->|Sim| T["status / resume<br/>Critérios, evidências e próximo passo"]
+    R -->|Falta dado necessário| Q["Resolver somente a lacuna<br/>Preservar escolhas existentes"]
+    Q --> C["configure<br/>Central autorizada e projeto registrado"]
+    C --> T
+    D -. "Setup completo solicitado" .-> S["HeBeBrain recomendado<br/>Obsidian existente ou mesma base"]
+    S --> C
+    C -. "Integrações opcionais" .-> G["GitHub<br/>Conta, acesso, destino e escopo"]
+    G --> J["TypeSafe / Jev<br/>Reutilizar credencial ou conectar localmente"]
+    J --> E["Registrar verificado, adiado e futuro<br/>Retomar o trabalho disponível"]
+    E --> T
+    T --> F(["Ciclo da entrega"])
 
-    classDef input fill:#0f172a,color:#fff,stroke:#38bdf8,stroke-width:2px;
-    classDef control fill:#172554,color:#dbeafe,stroke:#60a5fa;
-    classDef agent fill:#312e81,color:#eef2ff,stroke:#a78bfa;
-    classDef verify fill:#052e2b,color:#ccfbf1,stroke:#2dd4bf;
-    classDef memory fill:#3f2a09,color:#fef3c7,stroke:#f59e0b;
-    class A,Z input;
-    class B,C,D,E,G,W,S,J control;
-    class F,A1,A2,A3 agent;
-    class PW,V,R verify;
-    class K,H,I,P memory;
+    classDef entry fill:#e0f2fe,color:#0c4a6e,stroke:#0284c7,stroke-width:2px;
+    classDef local fill:#eef2ff,color:#312e81,stroke:#6366f1;
+    classDef optional fill:#f8fafc,color:#334155,stroke:#94a3b8,stroke-dasharray:5 3;
+    class A,F entry;
+    class D,R,Q,C,T local;
+    class S,G,J,E optional;
 ```
 
-Em alto risco, o agente pode encaminhar a revisão à skill `hebe-security-scan` disponível, seguindo seu escopo e instruções. A execução não é disparada apenas por este mapa. Uma pausa, cota ou falha de acesso mantém critérios pendentes; não comprova conclusão.
+`doctor` distingue arquivo **presente**, contrato **aplicável** e carregamento observado. Sem introspecção do host, `host_loaded` é `unknown`. Um contrato no disco não comprova que o Codex, Claude Code ou Grok o carregou. A fonte de detalhe operacional é [daily-runtime.md](../skills/orchestrate-models/references/daily-runtime.md); a sequência de escolhas está no [onboarding](../skills/orchestrate-models/references/onboarding.md).
 
-## O que executa hoje e o que falta
+## Ciclo vertical de entrega
 
-| Camada | Estado nesta versão |
-|---|---|
-| CLI local | `init`, `register`, `context`, `record`, `consolidate`, `status`, `list`, `search` e coleta explícita com `git_events.py` |
-| Contrato multiagente | `AGENTS.md`, bridge Claude, template e `project_context.py` para Codex, Claude Code e Grok |
-| Instruções conversacionais | Onboarding, consulta ao Brain, escolha de modelos disponíveis, delegação, sugestão de metas e revisão proporcional |
-| TypeSafe/Jev | `configure`, `status`, `models` e `evaluate --file`; chamadas explícitas, sem varrer ou enviar Brains automaticamente |
-| Playwright | Detecção e kit opcional para desktop/mobile, traces e artefatos de falha no produto alvo |
-| Recursos do host | Agentes, modelos, permissões e continuidade de metas dependem do Codex ou Claude instalado |
-| Etapas futuras | Hooks de captura, worker permanente, sync automático GitHub, recuperação automática com Jev e runner Claude; **não ativos nesta versão** |
+O plano local contém objetivo e critérios. A meta nativa é opcional. O contexto nasce no projeto/subprojeto; pais e central entram conforme a necessidade, sem misturar automaticamente registros de outros projetos.
 
-`record` guarda eventos; `consolidate` aplica as notas. Os comandos precisam ser chamados durante o trabalho. Um commit local não comprova push. Markdown permite consultar o conhecimento, mas a recuperação de IDs, fila e checkpoints também depende do armazenamento SQLite central.
+```mermaid
+flowchart TB
+    A(["Pedido ou retomada"]) --> D["doctor + status / resume<br/>Projeto, contrato e trabalho aberto"]
+    D --> P["Plano + critérios observáveis<br/>start / update · meta nativa opcional"]
 
-Referências: [README](../README.md), [contrato de agentes](../skills/orchestrate-models/references/agent-contract.md), [Playwright](../skills/orchestrate-models/references/playwright.md), [Brain e GitHub](../skills/orchestrate-models/references/brain-and-github.md), [metas de entrega](../skills/orchestrate-models/references/delivery-goals.md), [roteamento e provedores](../skills/orchestrate-models/references/model-routing.md) e [arquitetura de evolução](ORCHESTRATOR-EVOLUCAO.md).
+    subgraph CONTEXTO["1 · Contexto com fontes"]
+        direction TB
+        L["Shortlist local<br/>Projeto → pais necessários → central"] --> J{"Jev é útil<br/>e o envio está autorizado?"}
+        J -->|Sim| JV["Avaliação explícita<br/>Rerank e confiança quando fornecida"]
+        JV --> CF["Conferir fontes e incerteza<br/>Abster ou ampliar evidência se necessário"]
+        J -->|Não| CF
+        CF --> CT["Contexto selecionado pelo coordenador"]
+    end
+    P --> L
+
+    subgraph EXECUCAO["2 · Execução e integração"]
+        direction TB
+        M{"Há frentes independentes?"} -->|Sim| B["Agentes em lotes<br/>Slots reais · arquivos exclusivos<br/>modelo e esforço observados"]
+        M -->|Não| E["Execução focada<br/>Agente principal ou script"]
+        B --> I["Coordenador integra<br/>Inspeciona evidências e conflitos"]
+        E --> I
+    end
+    CT --> M
+
+    subgraph VERIFICACAO["3 · Evidência por artefato"]
+        direction TB
+        V["Verificar o resultado alterado<br/>Código/API · documento · dados · mídia"] --> W{"Existe superfície web<br/>afetada pela entrega?"}
+        W -->|Sim| PW["Playwright + inspeção visual<br/>Jornada · falha relevante · desktop/mobile"]
+        W -->|Não| RK
+        PW --> RK{"Revisão independente<br/>necessária pelo risco?"}
+        RK -->|Sim| RV["Revisão proporcional<br/>Fontes, revisão Git e cobertura"]
+        RV --> RF{"Há achado material?"}
+        RF -->|Sim| FIX["Corrigir na implementação<br/>Rever evidências afetadas"]
+        RK -->|Não| OK["Registrar evidências por critério"]
+        RF -->|Não| OK
+    end
+    I --> V
+    FIX --> I
+
+    subgraph ESTADO["4 · Memória e estados da entrega"]
+        direction TB
+        CP["checkpoint no Brain<br/>Decisões, critérios e próximo passo"] --> LC["Commit local<br/>SHA observado ou não aplicável"]
+        LC --> PS["Push<br/>Remoto + revisão confirmados<br/>ou não aplicável"]
+        PS --> PB["Publicação<br/>Ambiente + resultado verificado<br/>ou não aplicável"]
+        PB --> U["update + checkpoint<br/>Conservar cada estado e sua evidência"]
+    end
+    OK --> CP
+    U --> G{"Critérios vigentes comprovados<br/>ou dispensados explicitamente?<br/>Frentes concluídas e sem impedimentos?"}
+    G -->|Sim| Z(["close · conclusão reportada<br/>Comprovação e dispensas separadas"])
+    G -->|Não, há avanço possível| P
+    G -->|Impedimento concreto| H(["Entrega parcial permanece aberta<br/>Checkpoint + próximo passo para resume"])
+
+    classDef entry fill:#e0f2fe,color:#0c4a6e,stroke:#0284c7,stroke-width:2px;
+    classDef control fill:#eef2ff,color:#312e81,stroke:#6366f1;
+    classDef context fill:#f0f9ff,color:#075985,stroke:#38bdf8;
+    classDef execute fill:#f5f3ff,color:#5b21b6,stroke:#a78bfa;
+    classDef verify fill:#ecfdf5,color:#065f46,stroke:#34d399;
+    classDef memory fill:#fffbeb,color:#92400e,stroke:#f59e0b;
+    classDef partial fill:#fff7ed,color:#9a3412,stroke:#fb923c,stroke-width:2px;
+    class A,Z entry;
+    class D,P,J,M,W,RK,RF,G control;
+    class L,JV,CF,CT context;
+    class B,E,I,FIX execute;
+    class V,PW,RV,OK verify;
+    class CP,LC,PS,PB,U memory;
+    class H partial;
+```
+
+**Como ler os estados:** commit, push e publicação são independentes e só entram como ações quando pertencem ao escopo autorizado. O mapa pede registrar seu estado; não exige publicar toda entrega. Um SHA local não comprova push; push não comprova deploy. Critério obrigatório pendente mantém a entrega parcial. A dispensa exige evidência da autorização e motivo, e nunca vira verificação aprovada.
+
+**Como ler o Jev:** a shortlist e a decisão do coordenador são parte do fluxo orientado pela skill. O conector executa chamadas explícitas. Reranking integrado e automático ainda é futuro. `Choice` e `Score` podem fornecer confiança; `Noul` fornece probabilidade. Nenhum desses sinais concede autorização ou comprova a correção do trabalho.
+
+## Capacidades e fronteiras
+
+A [tabela de estado no README](../README.md#estado-da-versão) é a referência das capacidades da versão. Os comandos precisam ser chamados pelo agente; `resume` prepara contexto e `checkpoint` registra/consolida o estado, sem manter execução após o fim da sessão.
+
+Hooks de captura, worker permanente, sync GitHub, backup restaurável, recuperação automática com Jev e runner Claude permanecem **futuros**. Configurar GitHub ou salvar um snapshot da entrega não comprova backup recuperável. Markdown consulta o conhecimento; identidade, eventos e checkpoints também dependem do SQLite central.
+
+Referências: [contratos](../skills/orchestrate-models/references/agent-contract.md), [metas](../skills/orchestrate-models/references/delivery-goals.md), [Brain e GitHub](../skills/orchestrate-models/references/brain-and-github.md), [Playwright](../skills/orchestrate-models/references/playwright.md), [TypeSafe/Jev](../skills/orchestrate-models/references/typesafe-jev.md) e [evolução](ORCHESTRATOR-EVOLUCAO.md).

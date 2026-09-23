@@ -16,15 +16,16 @@ import sqlite3
 import sys
 import tempfile
 from urllib.parse import quote
+from urllib.parse import urlsplit
 import uuid
 
 
 KINDS = {
     "decision.proposed", "decision.accepted", "decision.superseded",
     "implementation.completed", "verification.completed", "commit.created",
-    "review.completed", "note.recorded",
+    "review.completed", "note.recorded", "push.completed", "publication.completed",
 }
-SOURCES = {"codex", "claude-code", "git", "manual"}
+SOURCES = {"codex", "claude-code", "grok", "git", "manual"}
 MARKER = "<!-- hebe-brain:"
 MAX_INPUT = 2 * 1024 * 1024
 MAX_EVENTS = 500
@@ -441,6 +442,24 @@ class Brain:
         validate_text(payload.get("body"), 64000, empty=True)
         if event["kind"] == "decision.superseded":
             validate_text(payload.get("supersedes"), 160, single_line=True)
+            validate_text(payload.get("replacement"), 160, single_line=True)
+            if payload["supersedes"] == payload["replacement"]:
+                raise BrainError("Decisão antiga e substituta precisam ser diferentes.")
+        if event["kind"] == "push.completed":
+            validate_text(payload.get("remote"), 1024, single_line=True)
+            validate_text(payload.get("revision"), 160, single_line=True)
+        if event["kind"] == "publication.completed":
+            url = validate_text(payload.get("url"), 2048, single_line=True)
+            validate_text(payload.get("revision"), 160, single_line=True)
+            try:
+                parsed = urlsplit(url)
+                _ = parsed.port
+                valid_url = (parsed.scheme in {"http", "https"} and bool(parsed.hostname)
+                             and not parsed.username and not parsed.password and not any(c.isspace() for c in url))
+            except ValueError:
+                valid_url = False
+            if not valid_url:
+                raise BrainError("Publicação exige URL HTTP(S) sem credenciais.")
         for key in ("session_id", "source_event_id"):
             if key in event:
                 validate_text(event[key], 240, single_line=True)
@@ -473,9 +492,25 @@ class Brain:
                 else:
                     payload = event["payload"]
                     if event["kind"] == "decision.superseded":
-                        accepted = conn.execute("SELECT kind, project_id FROM events WHERE event_id = ?", (payload["supersedes"],)).fetchone()
-                        if accepted is None or accepted["kind"] != "decision.accepted" or accepted["project_id"] != event["project_id"]:
-                            raise BrainError("Substituição deve apontar para uma decisão aceita deste projeto.")
+                        accepted = conn.execute("SELECT event_id, kind, project_id FROM events WHERE event_id IN (?, ?)",
+                                                (payload["supersedes"], payload["replacement"])).fetchall()
+                        if (len(accepted) != 2 or any(row["kind"] != "decision.accepted" or row["project_id"] != event["project_id"]
+                                                      for row in accepted)):
+                            raise BrainError("Substituição exige duas decisões aceitas deste projeto.")
+                        replacements = {}
+                        for row in conn.execute("SELECT payload_json FROM events WHERE project_id = ? AND kind = ?",
+                                                (event["project_id"], "decision.superseded")):
+                            prior_payload = json.loads(row["payload_json"])
+                            old, replacement = prior_payload.get("supersedes"), prior_payload.get("replacement")
+                            if old and replacement:
+                                replacements[old] = replacement
+                        if payload["supersedes"] in replacements:
+                            raise BrainError("Esta decisão já foi substituída.")
+                        cursor = payload["replacement"]
+                        while cursor in replacements:
+                            cursor = replacements[cursor]
+                            if cursor == payload["supersedes"]:
+                                raise BrainError("Substituições formariam um ciclo.")
                     conn.execute("""INSERT INTO events
                         (event_id, project_id, kind, occurred_at, source, source_ref, title, body, payload_json, event_json, content_hash, recorded_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -497,8 +532,18 @@ class Brain:
     def project_documents(self, conn, row):
         root, project_id = Path(row["path"]), row["project_id"]
         events = conn.execute("SELECT * FROM events WHERE project_id = ? ORDER BY seq", (project_id,)).fetchall()
-        superseded = {json.loads(event["payload_json"])["supersedes"]: event["event_id"]
-                      for event in events if event["kind"] == "decision.superseded"}
+        superseded, legacy_superseded = {}, {}
+        for event in events:
+            if event["kind"] != "decision.superseded":
+                continue
+            payload = json.loads(event["payload_json"])
+            old, replacement = payload.get("supersedes"), payload.get("replacement")
+            if old and replacement:
+                superseded[old] = replacement
+            elif old:
+                # v0.6 accepted only the old decision id. Preserve the event without
+                # inventing which accepted decision became current.
+                legacy_superseded[old] = event["event_id"]
         links = []
         for event in events:
             relative = self.note_rel(row, event)
@@ -512,9 +557,18 @@ class Brain:
             links.append((event, relative))
         decisions = ["## Decisões registradas pelo HeBe Brain", ""]
         accepted = [(event, rel) for event, rel in links if event["kind"] == "decision.accepted"]
+        accepted_by_id = {event["event_id"]: (event, rel) for event, rel in accepted}
         for event, rel in accepted:
             label = local_link(event["title"], root / rel, (root / row["decisions_rel"]).parent)
-            state = f"substituída por `{superseded[event['event_id']]}`" if event["event_id"] in superseded else "aceita"
+            if event["event_id"] in superseded:
+                replacement, replacement_rel = accepted_by_id[superseded[event["event_id"]]]
+                state = "substituída por " + local_link(replacement["title"], root / replacement_rel,
+                                                       (root / row["decisions_rel"]).parent)
+            elif event["event_id"] in legacy_superseded:
+                state = ("substituição legada sem decisão vigente vinculada; revisar evento `"
+                         + legacy_superseded[event["event_id"]] + "`")
+            else:
+                state = "aceita"
             decisions += [f"### {label}", "", f"- Data: {event['occurred_at']} · Estado: {state}",
                           f"- Evento: `{event['event_id']}` · Origem: `{event['source']}` · Referência: {event['source_ref']}", ""]
         if not accepted:
@@ -544,6 +598,17 @@ class Brain:
             commit_lines += [f"- `{event['source_ref']}` · {event['occurred_at']} · "
                              + local_link(event["title"], root / rel, (root / commit_rel).parent) for event, rel in commits]
             managed(root, commit_rel, "commits", "\n".join(commit_lines), "# Histórico de commits\n")
+        deliveries = [(event, rel) for event, rel in links if event["kind"] in {"push.completed", "publication.completed"}]
+        if deliveries:
+            delivery_rel = f"{row['vault_rel']}/04-Engenharia/Entregas.md"
+            delivery_lines = ["## Pushes e publicações registrados", ""]
+            for event, rel in deliveries:
+                payload = json.loads(event["payload_json"])
+                destination = payload["remote"] if event["kind"] == "push.completed" else payload["url"]
+                delivery_lines.append(f"- `{event['kind']}` · {event['occurred_at']} · revisão `{payload['revision']}`"
+                                      + f" · destino {destination} · "
+                                      + local_link(event["title"], root / rel, (root / delivery_rel).parent))
+            managed(root, delivery_rel, "deliveries", "\n".join(delivery_lines), "# Histórico de entregas\n")
         return max((event["seq"] for event in events), default=0), len(events)
 
     def consolidate(self, project_id=None):

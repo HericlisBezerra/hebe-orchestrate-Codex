@@ -1,0 +1,34 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "objective": "Entregar uma melhoria verificável no produto",
+    "candidates": [
+      {
+        "id": "runtime",
+        "summary": "Persistir objetivo, critérios, evidências e próximo passo"
+      },
+      {
+        "id": "visual",
+        "summary": "Refinar apenas a apresentação do mapa"
+      }
+    ]
+  },
+  "questions": {
+    "priority": {
+      "type": "choice",
+      "instructions": "Qual candidato reduz mais o risco de perder contexto entre sessões?",
+      "criteria": {
+        "runtime": "Cria continuidade operacional verificável.",
+        "visual": "Melhora a leitura sem alterar a continuidade."
+      }
+    },
+    "needs_human_review": {
+      "type": "noul",
+      "instructions": "A escolha muda permissões, publicação ou um compromisso difícil de reverter?",
+      "criteria": {
+        "true": "Exige confirmação ou revisão antes de agir.",
+        "false": "É uma recomendação local e reversível."
+      }
+    }
+  }
+}

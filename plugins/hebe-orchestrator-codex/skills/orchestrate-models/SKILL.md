@@ -1,77 +1,65 @@
 ---
 name: orchestrate-models
-description: Coordena entregas compostas com agentes, modelos disponíveis e memória por projeto no hebe-brain. Usar para configurar o orquestrador e seu Brain, orquestrar, delegar, paralelizar, escolher modelo e esforço ou integrar decisões ao Brain; aplicar em tarefas grandes com frentes independentes. Tarefas simples seguem execução direta.
+description: Coordena entregas compostas com agentes, critérios verificáveis e retomada por projeto no HeBeBrain. Usar para configurar o orquestrador, retomar uma entrega, delegar frentes independentes, escolher modelos ou integrar decisões e evidências ao Brain. Tarefas simples seguem execução direta.
 ---
 
 # Orquestrador HeBe
 
-Entregar com qualidade, evidência e contexto persistente. O coordenador mantém escopo, integração, decisões globais e verificação final; agentes recebem frentes delimitadas. Uma skill orienta o trabalho dentro das capacidades disponíveis: captura entre sessões, sincronização e provedores externos exigem integrações instaladas e configuradas.
+O coordenador mantém objetivo, integração e evidências; agentes recebem frentes delimitadas. O runtime local persiste configuração e estado da entrega. Modelos, slots, permissões e continuidade de execução pertencem ao host.
 
-## Primeira configuração e mapa
+## Entrar ou retomar
 
-No primeiro uso relevante sem configuração conhecida, ou quando o usuário pedir configurar, conectar ou revisar o setup, ler [onboarding.md](references/onboarding.md) e conduzir as escolhas pendentes. Verificar ou criar o contrato portátil `AGENTS.md` conforme [agent-contract.md](references/agent-contract.md). Verificar a skill `hebe-brain` no host atual e sugerir sua fonte oficial se ausente. Recomendar HeBeBrain; oferecer reaproveitar Obsidian existente ou usar ambos na mesma base. Definir a raiz antes de criar a central. Oferecer GitHub e Jev com o estado real das integrações; verificar credencial existente antes de abrir a configuração do conector e respeitar a ativação autorizada. Reutilizar escolhas já feitas e continuar o trabalho independente enquanto uma resposta estiver pendente.
+1. Identificar o projeto/subprojeto e ler o contrato aplicável. Usar `scripts/orchestrator.py` conforme [daily-runtime.md](references/daily-runtime.md): `doctor` para diagnóstico, `status` para estado e `resume` para preparar a retomada. Resolver o caminho do plugin instalado antes de chamar scripts a partir de outro projeto.
+2. Distinguir arquivo presente, contrato aplicável e carregamento observado pelo host. Sem introspecção, `host_loaded` é `unknown`; presença no disco não comprova carregamento. Ler [agent-contract.md](references/agent-contract.md) ao adotar ou corrigir contratos.
+3. Reutilizar configuração e escolhas anteriores. Se faltar algo necessário, seguir o onboarding rápido em [onboarding.md](references/onboarding.md). O onboarding completo fica para pedido de configuração ou revisão das integrações. GitHub, Jev, Obsidian e meta nativa são opcionais.
+4. Consultar primeiro o Brain, as decisões vigentes e a entrega aberta do projeto. Pais e central entram quando necessários. Para adoção, eventos, decisões e GitHub, ler [brain-and-github.md](references/brain-and-github.md).
 
-Ao apresentar o projeto ou quando pedirem o mapa, mostrar o fluxograma de primeira configuração e o ciclo de entrega em [MAPA-DO-PROJETO.md](../../docs/MAPA-DO-PROJETO.md), distinguindo o que funciona hoje das integrações futuras. A instalação do plugin não abre perguntas nem executa um assistente sozinha: esse fluxo começa quando esta skill é carregada na conversa.
+Ao pedirem o mapa ou no onboarding completo, mostrar [MAPA-DO-PROJETO.md](../../docs/MAPA-DO-PROJETO.md). Instalar a skill não inicia um assistente, captura contínua ou serviço permanente.
 
-## Contexto e escopo
+## Definir a entrega e a execução
 
-1. Identificar projeto e subprojeto pelos marcadores, configuração e raízes locais. Ler o `AGENTS.md` aplicável e instruções mais específicas da subpasta. Consultar primeiro o Brain e as decisões do projeto em execução; subir aos pais e ao cérebro central apenas quando necessário.
-2. Preservar formatos e decisões existentes. Para adoção, registro, atualizações de memória ou onboarding GitHub, ler [brain-and-github.md](references/brain-and-github.md).
-3. Conferir ferramentas, modelos, esforços, slots e provedores realmente disponíveis. Autorização para o trabalho local não ativa captura global nem publicação externa. Preservar autorizações já dadas sem repetir pedidos de rotina.
-4. Em entregas grandes com escopo claro, sugerir uma meta com objetivo e evidências de conclusão. Ler [delivery-goals.md](references/delivery-goals.md) ao propor ou gerenciar metas. Só criar meta nativa quando o usuário pedir ou aceitar explicitamente; o trabalho já autorizado pode avançar enquanto isso.
+Registrar objetivo, entregáveis, critérios observáveis, dependências e próximo passo. Usar `start` para uma nova entrega e `update` para mudanças e evidências. Preservar o objetivo ao receber orientações posteriores. Uma tarefa simples não exige um registro composto nem agentes.
 
-## Escolher a execução
+Meta nativa é opcional e exige pedido ou aceitação explícita. Ler [delivery-goals.md](references/delivery-goals.md) quando essa continuidade for útil; o plano local pode avançar dentro da autorização existente. Criar uma meta não amplia escopo ou permissões.
 
-Preferir scripts, consultas e ferramentas determinísticas para operações reproduzíveis. Escolher modelo pela tarefa, capacidades, qualidade observada, latência e custo. Ler [model-routing.md](references/model-routing.md) para roteamento, novos modelos, Claude e Jev.
+Preferir scripts e consultas para operações reproduzíveis. Para julgamento, conferir ferramentas, modelos, esforços e slots expostos pela sessão. Ler [model-routing.md](references/model-routing.md) ao escolher modelo ou provedor. Sol para engenharia, Astra para direção visual e Luna para frentes focadas são preferências configuráveis; usar somente IDs e esforços disponíveis.
 
-Quando a entrega alterar uma interface web ou um fluxo de navegador, ler [playwright.md](references/playwright.md). Reutilizar Playwright existente; quando faltar e a evidência no navegador for material, sugerir ou preparar o kit portátil. Validar jornada principal, estado relevante de falha, desktop, mobile e erros de página. Inspeção visual do produto renderizado faz parte da evidência.
+Preparar uma shortlist de fontes locais com projeto, origem e revisão/data. Jev pode ajudar a reordenar candidatos autorizados quando o ganho justificar a consulta. Carregar a skill oficial `typesafe-ai`, quando disponível, e ler [typesafe-jev.md](references/typesafe-jev.md). O conector faz avaliações explícitas; recuperação e reranking automáticos ainda são futuros. Confiança orienta revisão e abstenção, sem comprovar verdade ou permissão.
 
-Ao configurar ou usar TypeSafe/Jev, carregar a skill oficial `typesafe-ai` disponível no host e ler [typesafe-jev.md](references/typesafe-jev.md). Usar perguntas tipadas para seleção de contexto, classificação de eventos e sugestão de execução; conferir fontes, permissões e decisões aceitas separadamente. A instalação da skill não comprova conexão à API nem ativa automação do Brain. Reutilizar a autorização existente e verificar presença de credencial sem expor seu valor; solicitar segredo somente pelo mecanismo seguro implementado, se estiver ausente e a ativação tiver sido autorizada.
+## Delegar e integrar
 
-Preferências iniciais configuráveis: Sol para engenharia, Astra para direção visual e Luna para frentes focadas. Não são uma classificação universal nem equivalências entre fornecedores. Usar IDs e esforços anunciados pela sessão; modelos anteriores continuam elegíveis quando disponíveis e adequados.
+Delegar somente quando houver frentes independentes e trabalho útil para o coordenador. Mostrar um plano breve:
 
-Mostrar um plano breve antes de delegar uma entrega composta:
-
-| Frente | Entrega e evidência | Responsável | Modelo e esforço | Dependências |
+| Frente | Entrega e evidência | Arquivos e permissões | Modelo/esforço efetivo | Dependências |
 |---|---|---|---|---|
-| A1 | Resultado delimitado | nome do agente ou principal | seleção disponível ou herdada | paralela ou pré-requisito |
+| A1 | Resultado delimitado | Escopo exclusivo ou somente leitura | Seleção disponível ou herdada | Paralela ou pré-requisito |
 
-O plano informa a execução. Prosseguir dentro da autorização existente. Em uma tarefa simples, executar diretamente sem criar agentes ou cerimônia desnecessária.
+Cada agente recebe objetivo, contexto mínimo, critérios, arquivos, permissões e condição para devolver um impedimento ao coordenador. Investigação e revisão começam somente leitura. Evitar edições simultâneas nos mesmos arquivos; usar worktrees quando trouxerem benefício e manter um integrador.
 
-## Delegar com limites reais
+Distribuir frentes em lotes conforme os slots efetivos, incluindo o principal quando aplicável. Usar subagentes nativos; outra tarefa visível no aplicativo segue o contrato específico da ferramenta. Não criar processos para contornar limites. Anunciar somente agentes iniciados e modelo/esforço conhecidos; reutilizar um agente não altera seu modelo.
 
-Delegar quando houver trabalho independente útil para o agente e para o coordenador. Respeitar instruções do usuário, contrato das ferramentas e limite efetivo de slots, incluindo o principal quando aplicável. Muitos jobs podem ser distribuídos em lotes; a skill não amplia limites do host ou da conta.
+Usar a espera do ambiente e manter atualizações de progresso. Inspecionar evidências, resolver contradições e integrar os resultados. Uma chamada bem-sucedida não comprova a entrega. Resultado insuficiente retorna à frente responsável com contexto ou critério corrigido.
 
-Cada delegação deve informar:
+## Verificar por artefato
 
-- Objetivo, entrega, critérios de evidência e dependências.
-- Projeto, caminhos e contexto mínimo necessário; referências ao Brain pertinente.
-- Permissões e arquivos sob sua responsabilidade. Investigação e revisão ficam somente leitura, salvo correção autorizada.
-- Modelo e esforço quando a ferramenta permitir a seleção; registrar herança quando não houver override.
-- Condição para devolver ao coordenador uma ambiguidade ou impedimento que mude o escopo.
+Escolher a verificação pelo resultado alterado: comportamento de código/API, documento renderizado, dados reconciliados, mídia exportada ou experiência web. Registrar procedimento, ambiente/revisão, resultado e artefato de evidência quando relevante.
 
-Não permitir edições simultâneas nos mesmos arquivos. Usar worktrees quando o isolamento trouxer benefício e manter um integrador. Usar subagentes nativos; criação de outra tarefa visível no aplicativo segue a autorização específica exigida pela ferramenta.
+**Playwright aplica-se à superfície web.** Ler [playwright.md](references/playwright.md) quando a mudança depender do navegador. Reutilizar o setup existente e adaptar o kit ao produto antes de contar seus resultados como evidência. Verificar jornada, estado de falha pertinente, desktop/mobile e resultado visual. Uma build ou um smoke genérico não comprova esses critérios.
 
-Anunciar agentes efetivamente iniciados, modelo/esforço conhecidos e qualquer fallback material. Reutilizar um agente não muda seu modelo por intenção: informar o modelo herdado ou desconhecido, sem atribuir o modelo planejado como executado.
+Para mudanças de alto risco em autenticação, permissões, isolamento entre clientes, pagamentos, webhooks, segredos, uploads ou APIs públicas, encaminhar revisão independente proporcional. Usar `hebe-security-scan` se disponível, lendo suas instruções; caso contrário, relatar o método e a cobertura usados. Revisão comum pode usar as ferramentas do host; `/review` não é uma API universal.
 
-## Acompanhar e integrar
+Achados materiais voltam à implementação e à verificação afetada. Preservar decisões aceitas e revisão Git; não repetir verificações sem mudança ou preocupação que justifique. Correções permanecem dentro do escopo autorizado.
 
-Usar o mecanismo de espera do ambiente, evitando polling repetitivo e mantendo atualizações de progresso. Se houver dependência sequencial, falta de slots ou ausência de delegação, continuar o que for possível no principal e explicar o limite concreto.
+## Checkpoint e fechamento
 
-Ao receber resultados, inspecionar evidências e alterações, resolver contradições e executar validação proporcional ao risco. Sucesso da chamada não prova sucesso da entrega. Reclassificar resultados superficiais ou sem evidência: corrigir o contexto, ajustar esforço ou escolher outro modelo elegível conforme a necessidade.
+Usar `checkpoint` nos marcos relevantes para registrar o estado e a evidência no Brain configurado. Agentes fornecem candidatos/eventos; o coordenador ou escritor designado consolida. Conferir a saída antes de afirmar que o Brain foi atualizado.
 
-Registrar marcos relevantes no Brain configurado: decisões aceitas, mudanças implementadas, evidência de verificação e commits observados. Agentes fornecem propostas/eventos; o coordenador ou escritor designado consolida para evitar escrita concorrente. Distinguir proposta, implementação, verificação, commit local e push comprovado.
+Separar o resultado da entrega de commit local, push e publicação. Cada estado precisa de sua própria evidência; só executar ações externas dentro da autorização para o destino. O runtime registra esses estados, sem realizar Git push ou deploy por conta própria.
 
-## Revisão proporcional
+- **Conclusão comprovada:** todos os critérios vigentes possuem evidência suficiente.
+- **Entrega parcial:** existe critério obrigatório pendente, falho ou não verificado; registrar impedimento e próximo passo.
+- **Critério dispensado explicitamente:** registrar quem autorizou, a referência e o motivo. A dispensa altera o contrato; não equivale a verificação aprovada e deve aparecer no fechamento.
 
-Revisão comum usa as ferramentas disponíveis do host; `/review` não é uma API universal. Para mudanças de alto risco em autenticação, permissões, isolamento entre clientes, pagamentos, webhooks, segredos, uploads ou APIs públicas, encaminhar uma revisão independente à skill `hebe-security-scan`, se disponível, e ler suas instruções antes de executar.
+Usar `close` somente com os requisitos de [daily-runtime.md](references/daily-runtime.md) atendidos. Entregas parciais conservam seu estado em `update` e `checkpoint`; não concluir a meta nativa. Pausa, cota e fim de turno também não são conclusão.
 
-Usar o menor escopo útil: Change no diff; Release na entrega iminente; Baseline quando solicitado ou necessário para estabelecer cobertura. Fornecer decisões aceitas do Brain e revisão Git. O agente começa somente leitura, respeita os modelos disponíveis e entrega achados com evidência e limites de cobertura. Correção e testes de produção exigem a autorização correspondente; autorização existente continua válida.
-
-Se a skill não estiver disponível, informar a limitação e usar uma revisão adequada ao escopo sem chamá-la de `hebe-security-scan`. A configuração desse encaminhamento não inicia uma auditoria do projeto atual.
-
-## Fechar a entrega
-
-Sintetizar resultado, evidência, pendências e estado do Brain. Para trabalho delegado, identificar as frentes e modelos efetivamente usados em uma tabela curta; não concatenar relatos de agentes. Distinguir uso conhecido de estimativas e informar quando o host não expuser custos ou modelo efetivo.
-
-Concluir uma meta apenas quando todos os critérios estiverem atendidos. Interrupção, falta de contexto, cota ou fim de turno não equivalem a conclusão. Sem suporte nativo à continuidade, persistir o próximo passo e informar honestamente o estado; não prometer execução após encerrar a sessão.
+Sintetizar resultado, evidências, dispensas, pendências e estado do Brain. Para trabalho delegado, mostrar frentes e modelos efetivamente usados em uma tabela curta. Sem execução persistente oferecida pelo host, registrar a retomada e informar esse limite; não prometer trabalho após o fim da sessão.

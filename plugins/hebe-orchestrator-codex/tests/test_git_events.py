@@ -85,6 +85,21 @@ class GitEventsTests(unittest.TestCase):
         self.assertEqual(self.collect("--since", "yesterday").returncode, 2)
         self.assertEqual(self.collect(project="not-a-uuid").returncode, 2)
 
+    def test_before_revision_paginates_scoped_history_without_duplicates(self):
+        expected = [self.commit(f"backend/file-{index}.txt", f"Backend {index}") for index in range(5)]
+        self.commit("frontend/other.txt", "Frontend")
+        first = json.loads(self.collect("--limit", "2", path=self.repo / "backend").stdout)
+        self.assertEqual([event["source_ref"] for event in first], expected[-2:])
+        cursor = first[0]["source_ref"]
+        second_result = self.collect("--limit", "2", "--before-revision", cursor, path=self.repo / "backend")
+        self.assertEqual(second_result.returncode, 0, second_result.stderr)
+        second = json.loads(second_result.stdout)
+        self.assertEqual([event["source_ref"] for event in second], expected[1:3])
+        third = json.loads(self.collect("--limit", "2", "--before-revision", second[0]["source_ref"],
+                                       path=self.repo / "backend").stdout)
+        self.assertEqual([event["source_ref"] for event in third], expected[:1])
+        self.assertEqual(self.collect("--before-revision", "f" * 40, path=self.repo / "backend").returncode, 2)
+
     def test_secret_subject_is_not_printed(self):
         token = "ghp_" + "a" * 32
         self.commit("file", "Chave indevida " + token)

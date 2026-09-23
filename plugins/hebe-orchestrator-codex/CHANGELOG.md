@@ -1,5 +1,19 @@
 # Histórico de versões
 
+## 0.7.0 — 2026-09-23
+
+- Runtime local `orchestrator.py` com configuração persistente, diagnóstico, início, consulta, retomada, atualização, checkpoint e fechamento de entregas.
+- Uma entrega ativa por projeto, critérios com evidência, frentes, impedimentos, próximo passo e controle de revisão nas atualizações.
+- Checkpoints idempotentes no Brain e fechamento que distingue critérios comprovados de dispensas explícitas; entregas parciais permanecem abertas.
+- Diagnóstico diferencia contrato presente, aplicável e carregamento desconhecido pelo host. Configuração Playwright ancestral é preservada.
+- Prévia Jev valida o pedido sem credencial ou rede; arquivos de avaliação por symlink são recusados e o formulário usa URL de capacidade aleatória.
+- Coleta Git oferece paginação explícita e limitada por `--before-revision`.
+- Checkpoint e fechamento validam a proveniência antes de alterar o estado da entrega.
+- Eventos com origem `grok`, estados `push.completed`/`publication.completed` e substituição de decisão com `supersedes` e `replacement`; substituições legadas sem sucessora vinculada permanecem identificadas sem inferência de aceite.
+- Onboarding rápido separado do completo e mapa vertical com shortlist local, Jev explícito, agentes em lotes, verificação por artefato e retorno de achados à implementação.
+- Playwright limitado à superfície web; commit local, push e publicação reportados com evidências próprias.
+- Hooks, sync, backup/restauração completos, recuperação automática com Jev e runner Claude continuam futuros.
+
 ## 0.6.0 — 2026-09-23
 
 - `AGENTS.md` como contrato portátil entre Codex, Claude Code e Grok, com bridge `CLAUDE.md`.

@@ -27,7 +27,7 @@ def git(path, *arguments, check=True):
     return result
 
 
-def collect(path, project_id, limit=50, since=None):
+def collect(path, project_id, limit=50, since=None, before_revision=None):
     valid_uuid(project_id)
     root = Path(path).expanduser().resolve()
     if not root.is_dir() or not 1 <= limit <= 500:
@@ -39,6 +39,8 @@ def collect(path, project_id, limit=50, since=None):
                 raise ValueError
         except ValueError:
             raise BrainError("--since exige data ISO-8601 com fuso horário.") from None
+    if before_revision and not re.fullmatch(r"[0-9a-f]{40,64}", before_revision):
+        raise BrainError("--before-revision exige SHA completo válido.")
     repo = Path(git(root, "rev-parse", "--show-toplevel").stdout.decode("utf-8").strip()).resolve()
     try:
         relative = root.relative_to(repo).as_posix()
@@ -54,10 +56,20 @@ def collect(path, project_id, limit=50, since=None):
     head = revision.stdout.decode("ascii").strip()
     if not re.fullmatch(r"[0-9a-f]{40,64}", head):
         raise BrainError("Revisão Git inválida.")
-    arguments = ["rev-list", f"--max-count={limit}"]
+    starts = [head]
+    if before_revision:
+        ancestor = git(repo, "merge-base", "--is-ancestor", before_revision, head, check=False)
+        scoped = git(repo, "rev-list", "--max-count=1", before_revision, "--", relative).stdout.decode("ascii").strip()
+        if ancestor.returncode or scoped != before_revision:
+            raise BrainError("Cursor não pertence ao histórico deste caminho e filtro.")
+        lineage = git(repo, "rev-list", "--parents", "--max-count=1", before_revision).stdout.decode("ascii").split()
+        starts = lineage[1:]
+        if not starts:
+            return []
+    arguments = ["rev-list", "--topo-order", f"--max-count={limit}"]
     if since:
         arguments.append(f"--since={since}")
-    arguments.extend([head, "--", relative])
+    arguments.extend([*starts, "--", relative])
     hashes = git(repo, *arguments).stdout.decode("ascii").splitlines()
     events = []
     for sha in reversed(hashes):
@@ -101,9 +113,10 @@ def main():
     parser.add_argument("--project", required=True, help="UUID já registrado no Brain.")
     parser.add_argument("--limit", type=int, default=50)
     parser.add_argument("--since", help="Filtro opcional ISO-8601 com fuso.")
+    parser.add_argument("--before-revision", help="SHA completo do último commit do lote anterior; exclusivo.")
     args = parser.parse_args()
     try:
-        print(json.dumps(collect(args.path, args.project, args.limit, args.since), ensure_ascii=False))
+        print(json.dumps(collect(args.path, args.project, args.limit, args.since, args.before_revision), ensure_ascii=False))
         return 0
     except BrainError as exc:
         message = str(exc)
