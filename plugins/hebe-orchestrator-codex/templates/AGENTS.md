@@ -17,12 +17,14 @@ Este arquivo orienta Codex, Claude Code, Grok e outros agentes que trabalham nes
 
 ## Como trabalhar
 
-1. Retome a configuração, o Brain e a entrega aberta antes de criar outro plano. Confirme escopo, restrições e critérios observáveis; meta nativa é opcional.
-2. Inspecione o estado atual antes de editar.
-3. Delegue apenas frentes independentes, com arquivos e critérios claros, em lotes compatíveis com os slots disponíveis.
-4. Mantenha um coordenador responsável por integrar mudanças e resolver conflitos.
-5. Verifique o artefato alterado e corrija regressões dentro do escopo. Achados da revisão retornam à implementação e à verificação afetada.
-6. Registre decisões, evidências, pendências e próximo passo nos checkpoints do Brain.
+1. Use o menor percurso suficiente: tarefa curta segue direta; entrega composta retoma estado; catálogo, DAG, Jev, revisão dedicada e sync entram somente quando o caso os aciona.
+2. Para uma entrega composta, retome a configuração, o Brain e a entrega aberta antes de criar outro plano. Confirme escopo, restrições e critérios observáveis; meta nativa é opcional.
+3. Inspecione o estado atual antes de editar.
+4. Atualize o catálogo somente se a escolha de modelo for material e a observação mudou. Delegue apenas frentes independentes, com arquivos e critérios claros; quando houver mais frentes que slots, planeje ondas determinísticas e execute uma por vez.
+5. Mantenha um coordenador responsável por integrar mudanças e resolver conflitos.
+6. Verifique o artefato alterado e corrija regressões dentro do escopo. Achados da revisão retornam à implementação e à verificação afetada.
+7. Faça busca e shortlist local; use reranking externo somente com conteúdo autorizado, limiar e fallback local.
+8. Registre decisões, evidências, pendências e próximo passo nos checkpoints do Brain. Se o sync privado estiver configurado, confira seu último estado sem confundir checkpoint local com push remoto.
 
 ## Definição de concluído
 

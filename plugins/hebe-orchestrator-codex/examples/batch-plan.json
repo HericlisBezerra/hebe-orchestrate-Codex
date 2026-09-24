@@ -1,0 +1,25 @@
+{
+  "limits": {
+    "source": "host.example",
+    "registry_source": "host.example",
+    "observed_at": "2026-09-23T12:00:00Z",
+    "global_slots": 3,
+    "model_slots": {
+      "model-design-current": 1,
+      "model-engineering-current": 2,
+      "model-volume-current": 3
+    }
+  },
+  "retry_policy": {
+    "max_attempts": 2,
+    "retry_failed": true,
+    "retry_cancelled": false
+  },
+  "tasks": [
+    {"id": "research-a", "model": "model-volume-current", "depends_on": []},
+    {"id": "research-b", "model": "model-volume-current", "depends_on": []},
+    {"id": "implementation", "model": "model-engineering-current", "depends_on": ["research-a", "research-b"]},
+    {"id": "visual-review", "model": "model-design-current", "depends_on": ["implementation"]},
+    {"id": "code-review", "model": "model-engineering-current", "depends_on": ["implementation"]}
+  ]
+}

@@ -1,5 +1,17 @@
 # Histórico de versões
 
+## 0.8.0 — 2026-09-23
+
+- Catálogo privado de modelos a partir de snapshots observados do host, com adapter para `model/list` do Codex App Server, diferenças entre observações, upgrades anunciados e recomendação por capacidades e métricas disponíveis.
+- Planejador declarativo de DAGs para até 20 mil tarefas, com ondas determinísticas, slots globais e por modelo, dependências, retries e bloqueios; a execução continua pertencendo aos agentes nativos do host.
+- Reranking Jev integrado para shortlists locais: uma pergunta `Noul` por candidato em uma chamada, limiar de abstenção, fallback local estável e proveniência sem reproduzir o conteúdo enviado.
+- Snapshots determinísticos do Brain central, projetos registrados, eventos e entregas, com manifesto de hashes, verificação, restauração relocável e preservação de conflitos/extras.
+- Sync Git automático em checkout dedicado, commit idempotente, push sem force, estado de falha retomável, execução em primeiro plano e instalação explícita de job `launchd` no macOS.
+- Confirmação persistida do destino privado de backup vinculada à URL efetiva do remoto; remotos locais são distinguidos de GitHub e nenhum token entra na configuração.
+- Catálogo, configuração de sync e estado operacional protegidos fora do projeto; inputs com segredos, symlinks, traversal, schemas desconhecidos e destinos divergentes são recusados.
+- Percurso adaptativo em três níveis: tarefas simples seguem diretas; entregas compostas usam estado e checkpoints; catálogo, DAG, Jev, revisão dedicada e sync entram somente quando acionados pelo volume, ambiguidade ou risco.
+- Revisão independente fechou troca de remoto após exportação, substituição de SQLite por symlink, segredos embutidos no texto do Jev, regex quadrática e mutação de bytes/árvore Git após a verificação.
+
 ## 0.7.0 — 2026-09-23
 
 - Runtime local `orchestrator.py` com configuração persistente, diagnóstico, início, consulta, retomada, atualização, checkpoint e fechamento de entregas.
@@ -47,4 +59,4 @@
 - Coleta de commits Git por caminho e preservação de proveniência.
 - Orientação de modelos, metas e revisão proporcional ao risco.
 
-Captura contínua, sync automático, recuperação automática com Jev e runner Claude permanecem no roadmap.
+Hooks de captura global, recuperação automática com Jev e runner Claude permanecem no roadmap. O sync da 0.8.0 só fica automático depois que um checkout Git dedicado e privado é configurado e o runner ou job `launchd` é ativado explicitamente.

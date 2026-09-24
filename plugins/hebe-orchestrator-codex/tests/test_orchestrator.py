@@ -318,6 +318,12 @@ class OrchestratorTests(unittest.TestCase):
         credential.parent.mkdir(parents=True, mode=0o700)
         credential.write_text("This deliberately is not valid credential JSON")
         credential.chmod(0o000)
+        model_catalog = self.user_root / ".config/hebe-brain/model-catalog.json"
+        model_catalog.write_text("This deliberately is not valid catalog JSON")
+        model_catalog.chmod(0o000)
+        sync_config = self.user_root / ".config/hebe-brain/sync.json"
+        sync_config.write_text("This deliberately is not valid sync JSON")
+        sync_config.chmod(0o000)
         self.start()
         before = self.snapshot(self.root)
         real_open = os.open
@@ -332,6 +338,12 @@ class OrchestratorTests(unittest.TestCase):
         self.assertEqual(result["agents"]["applicable"], [str(self.project / "AGENTS.md"), str(nested / "AGENTS.md")])
         self.assertEqual(result["jev"]["source"], "local_file")
         self.assertTrue(result["jev"]["presence_only"])
+        self.assertTrue(result["model_registry"]["configured"])
+        self.assertTrue(result["model_registry"]["presence_only"])
+        self.assertFalse(result["model_registry"]["catalog_read"])
+        self.assertTrue(result["brain_sync"]["configured"])
+        self.assertTrue(result["brain_sync"]["presence_only"])
+        self.assertFalse(result["brain_sync"]["destination_checked"])
         self.assertTrue(result["git"]["repository"])
         self.assertEqual(result["playwright"]["configs"], [str(self.project / "playwright.config.ts")])
 

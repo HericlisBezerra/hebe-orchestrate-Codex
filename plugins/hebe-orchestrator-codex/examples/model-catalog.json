@@ -1,0 +1,33 @@
+{
+  "source": "host.example",
+  "observed_at": "2026-09-23T12:00:00Z",
+  "models": [
+    {
+      "id": "model-design-current",
+      "family": "design",
+      "version": "2",
+      "capabilities": ["design", "visual-review"],
+      "efforts": ["high", "max"],
+      "max_parallel": 1,
+      "metadata": {"quality": 0.94}
+    },
+    {
+      "id": "model-engineering-current",
+      "family": "engineering",
+      "version": "3",
+      "capabilities": ["engineering", "review"],
+      "efforts": ["low", "medium", "high"],
+      "max_parallel": 2,
+      "metadata": {"quality": 0.9}
+    },
+    {
+      "id": "model-volume-current",
+      "family": "volume",
+      "version": "4",
+      "capabilities": ["focused", "high-volume"],
+      "efforts": ["low", "medium"],
+      "max_parallel": 4,
+      "metadata": {"quality": 0.75}
+    }
+  ]
+}

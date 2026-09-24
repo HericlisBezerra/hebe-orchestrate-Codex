@@ -29,6 +29,9 @@ CRITERION_STATES = {"pending", "passed", "failed", "waived"}
 FRONT_STATES = {"planned", "running", "completed", "failed", "cancelled"}
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 PLAYWRIGHT_CONFIGS = tuple("playwright.config." + ext for ext in ("ts", "js", "mts", "mjs", "cts", "cjs"))
+MODEL_CATALOG_REL = Path(".config/hebe-brain/model-catalog.json")
+SYNC_CONFIG_REL = Path(".config/hebe-brain/sync.json")
+SYNC_LAUNCHD_REL = Path("Library/LaunchAgents/digital.hebe.brain-sync.plist")
 
 
 class OrchestratorError(BrainError):
@@ -507,6 +510,11 @@ def doctor(path, home=None, source=None):
               "brain": {"configured": home is not None, "source": source, "initialized": False},
               "jev": {"configured": credential_source is not None, "source": credential_source,
                       "presence_only": True, "connection_checked": False},
+              "model_registry": {"configured": regular_present(Path.home() / MODEL_CATALOG_REL),
+                                 "presence_only": True, "catalog_read": False},
+              "brain_sync": {"configured": regular_present(Path.home() / SYNC_CONFIG_REL),
+                             "scheduler_installed": regular_present(Path.home() / SYNC_LAUNCHD_REL),
+                             "presence_only": True, "destination_checked": False},
               "git": git, "playwright": {"configs": configs, "execution_verified": False}}
     if home is not None:
         brain = Brain(home)

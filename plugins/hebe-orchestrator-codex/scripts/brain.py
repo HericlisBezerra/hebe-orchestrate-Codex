@@ -38,7 +38,9 @@ SECRET_PATTERNS = [
     re.compile(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----"),
     re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b"),
     re.compile(r"\bBearer\s+[A-Za-z0-9._~+/-]{12,}", re.I),
-    re.compile(r"[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@", re.I),
+    # Start only at a scheme boundary. An unanchored greedy scheme retries at
+    # every letter of long prose and makes this safety scan quadratic.
+    re.compile(r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@", re.I),
     re.compile(r"\b(?:[A-Z0-9_]*(?:API_KEY|SECRET|TOKEN|PASSWORD|PASSWD|SENHA|SERVICE_ROLE_KEY))\s*[\"']?\s*[:=]\s*[\"']?([A-Za-z0-9_./+!@$%-]{8,})", re.I),
 ]
 PLACEHOLDERS = {"redacted", "redigido", "example", "changeme", "placeholder"}

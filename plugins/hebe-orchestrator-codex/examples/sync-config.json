@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "brain_home": "/absolute/path/to/hebe-brain",
+  "checkout": "/absolute/path/to/dedicated-brain-backup-checkout",
+  "remote": "origin",
+  "branch": "main",
+  "interval_seconds": 300,
+  "destination_kind": "remote",
+  "destination_url_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "private_destination_confirmed": false
+}

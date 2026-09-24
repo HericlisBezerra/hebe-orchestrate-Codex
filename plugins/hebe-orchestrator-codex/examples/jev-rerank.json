@@ -1,0 +1,16 @@
+{
+  "query": "Onde está registrada a decisão de usar o índice local antes do julgamento semântico?",
+  "threshold": 0.65,
+  "candidates": [
+    {
+      "id": "projeto-nota-12",
+      "text": "O índice local gera uma shortlist com identificadores e revisões. A decisão de usar julgamento semântico após a busca local consta no registro do projeto.",
+      "metadata": {"source": "nota-sintetica", "revision": "2026-09-01"}
+    },
+    {
+      "id": "projeto-nota-19",
+      "text": "A interface mostra o andamento das entregas e os bloqueios atuais.",
+      "metadata": {"source": "nota-sintetica", "revision": "2026-09-02"}
+    }
+  ]
+}

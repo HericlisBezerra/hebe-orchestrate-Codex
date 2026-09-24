@@ -11,13 +11,16 @@ Este arquivo é a fonte portátil de instruções para Codex, Claude Code, Grok 
 
 ## Fluxo de trabalho
 
-1. Identifique a raiz e retome a configuração e a entrega existentes com `scripts/orchestrator.py`. Use `doctor` para diagnóstico e `status`/`resume` para consultar estado; defina escopo e critérios antes de iniciar outra entrega.
-2. Leia apenas as instruções e documentos relevantes à tarefa. Use `docs/MAPA-DO-PROJETO.md` para o fluxo completo e `skills/orchestrate-models/SKILL.md` para orquestração.
-3. Divida em agentes somente quando houver frentes independentes. Informe objetivo, arquivos, evidência e dependências de cada frente.
-4. Evite edições simultâneas nos mesmos arquivos. O coordenador integra, resolve conflitos e valida o resultado.
-5. Verifique cada artefato proporcionalmente ao risco. Achados materiais retornam à implementação e à verificação afetada. Registre marcos e evidências com `checkpoint` no Brain configurado.
-6. Declare conclusão comprovada somente quando todos os critérios vigentes estiverem atendidos. Critério obrigatório pendente significa entrega parcial. Uma dispensa exige autorização explícita, referência e motivo; ela não conta como verificação aprovada.
-7. Registre implementação, verificação, commit local, push e publicação separadamente. Uma entrega parcial conserva o impedimento e o próximo passo para retomada.
+1. Classifique a tarefa e use o menor percurso suficiente: execução direta para uma mudança curta; entrega persistente para vários critérios ou retomada; escala somente para volume, dependências, ambiguidade ou alto risco.
+2. Para entrega ou escala, identifique a raiz e retome a configuração e a entrega existentes com `scripts/orchestrator.py`. Use `doctor` para diagnóstico e `status`/`resume` para consultar estado; defina escopo e critérios antes de iniciar outra entrega.
+3. Atualize `model_registry.py` somente quando a escolha de modelo for material e o snapshot observado mudou ou não existe. IDs, esforços e slots não são inferidos de documentação antiga; novidades geram sugestão de avaliação, sem promoção silenciosa.
+4. Leia apenas as instruções e documentos relevantes à tarefa. O mapa completo é para onboarding, pedido explícito ou diagnóstico da arquitetura; `skills/orchestrate-models/SKILL.md` governa a execução adaptativa.
+5. Divida em agentes somente quando houver frentes independentes. Para mais frentes que slots, use `batch_scheduler.py` e execute uma onda por vez com os agentes nativos do host.
+6. Evite edições simultâneas nos mesmos arquivos. O coordenador integra, resolve conflitos e valida o resultado.
+7. Faça a shortlist local primeiro. Quando autorizado e útil, use `jev_rerank.py`; abstenção ou falha conserva a ordem local e não bloqueia trabalho determinístico.
+8. Verifique cada artefato proporcionalmente ao risco. Achados materiais retornam à implementação e à verificação afetada. Registre marcos e evidências com `checkpoint` no Brain configurado.
+9. Declare conclusão comprovada somente quando todos os critérios vigentes estiverem atendidos. Critério obrigatório pendente significa entrega parcial. Uma dispensa exige autorização explícita, referência e motivo; ela não conta como verificação aprovada.
+10. Registre implementação, verificação, commit local, push, publicação e sync do Brain separadamente. Uma entrega parcial conserva o impedimento e o próximo passo para retomada.
 
 ## Contrato por projeto
 
@@ -49,6 +52,7 @@ Playwright aplica-se a entregas que alteram uma interface web ou um fluxo no nav
 - O manifesto fica em `.codex-plugin/plugin.json`.
 - A skill principal fica em `skills/orchestrate-models/`.
 - A entrada da rotina é `scripts/orchestrator.py`: `configure`, `doctor`, `start`, `status`, `resume`, `update`, `checkpoint` e `close`. Os CLIs especializados são `scripts/brain.py`, `scripts/git_events.py`, `scripts/jev.py` e `scripts/project_context.py`.
-- Resolva `<plugin-root>` antes de chamar scripts a partir de outro projeto. Configuração local não ativa hooks, sync, backup restaurável ou runner Claude; esses recursos permanecem futuros.
+- Catálogo e escala usam `scripts/model_registry.py` e `scripts/batch_scheduler.py`; reranking usa `scripts/jev_rerank.py`; snapshot, verificação, restauração e Git usam `scripts/brain_sync.py`.
+- Resolva `<plugin-root>` antes de chamar scripts a partir de outro projeto. Sync automático exige checkout Git dedicado, confirmação de destino privado e ativação explícita do runner/launchd. Hooks de conversa e runner Claude permanecem futuros.
 - Templates portáteis ficam em `templates/`.
 - Antes de distribuir, valide o plugin e a skill, confira o pacote publicado e reinstale o marketplace pessoal pelo fluxo oficial do `plugin-creator`.

@@ -1,6 +1,6 @@
 # HeBe Orchestrator for Codex
 
-**Versão 0.7.0.** Coordenação de entregas com retomada por projeto, critérios verificáveis, agentes em lotes e checkpoints no HeBeBrain. `AGENTS.md` compartilha o contrato entre Codex, Claude Code e Grok; cada host conserva seus modelos, ferramentas e limites.
+**Versão 0.8.0.** Coordenação de entregas com retomada por projeto, critérios verificáveis, catálogo de modelos observado, planejamento de DAG em ondas, reranking Jev e snapshots restauráveis do HeBeBrain com sync Git explícito. `AGENTS.md` compartilha o contrato entre Codex, Claude Code e Grok; cada host conserva seus modelos, ferramentas e limites.
 
 HeBeBrain é a opção principal de organização. Obsidian existente pode abrir a mesma base Markdown. A [skill hebe-brain](https://github.com/HericlisBezerra/hebe-brain) e o visualizador são componentes separados; este plugin inclui o núcleo de memória, a rotina local e a skill de coordenação.
 
@@ -14,55 +14,57 @@ Para a primeira configuração completa:
 
 > Use $orchestrate-models para mostrar o mapa e configurar HeBeBrain, GitHub e a opção Jev, reaproveitando minhas escolhas existentes.
 
-A entrada rápida resolve apenas o que falta para o trabalho atual. GitHub, Jev, Obsidian e meta nativa são opcionais. Instalar o plugin não abre um assistente nem inicia captura ou execução contínua.
+A entrada rápida resolve apenas o que falta para o trabalho atual. GitHub, Jev, Obsidian e meta nativa são opcionais. Instalar o plugin não abre um assistente, ativa um runner ou inicia captura contínua.
+
+O mapa abaixo é a arquitetura completa. A execução diária usa o menor percurso suficiente: tarefa simples vai direto ao artefato; entrega composta usa estado e poucos agentes; catálogo, DAG, Jev, revisão dedicada e sync entram somente quando o caso os aciona. Isso evita transformar toda solicitação no custo máximo do orquestrador.
 
 ## Mapa vertical
 
 ```mermaid
 flowchart TB
     A(["Pedido ou retomada"]) --> D["doctor + status / resume<br/>Projeto, contrato e Brain"]
-    D --> P["Plano + critérios<br/>Meta nativa opcional"]
-    P --> C["Shortlist local com fontes<br/>Jev explícito quando útil e autorizado"]
-    C --> E["Execução focada ou agentes em lotes<br/>Coordenador integra"]
+    D --> M["Catálogo observado<br/>import / import-codex"]
+    M --> P["Plano + critérios<br/>DAG e slots reais"]
+    P --> C["Shortlist local<br/>Jev opcional com abstenção"]
+    C --> E["Ondas declarativas<br/>Host executa · coordenador integra"]
     E --> V["Verificação por artefato<br/>Playwright somente para superfície web"]
     V --> R{"Revisão exige correção?"}
     R -->|Sim| E
     R -->|Não| B["Checkpoint no Brain<br/>Evidências e decisões"]
-    B --> S["Estados separados<br/>Implementação · verificação · commit · push · publicação"]
+    B --> S["Snapshot → verify → commit → push<br/>Estados separados e destino explícito"]
     S --> F{"Critérios comprovados<br/>ou dispensados explicitamente?"}
-    F -->|Sim, frentes concluídas e sem impedimentos| Z(["Fechar e reportar evidências e dispensas"])
-    F -->|Pendência com avanço possível| P
-    F -->|Impedimento concreto| H(["Entrega parcial aberta<br/>Checkpoint e próximo passo"])
+    F -->|Sim| Z(["Fechar e reportar evidências"])
+    F -->|Pendência| P
+    F -->|Impedimento| H(["Entrega parcial aberta<br/>Checkpoint e próximo passo"])
 
     classDef entry fill:#e0f2fe,color:#0c4a6e,stroke:#0284c7,stroke-width:2px;
     classDef work fill:#eef2ff,color:#312e81,stroke:#818cf8;
     classDef verify fill:#ecfdf5,color:#065f46,stroke:#34d399;
     classDef memory fill:#fffbeb,color:#92400e,stroke:#f59e0b;
     class A,Z entry;
-    class D,P,C,E work;
+    class D,M,P,C,E work;
     class V,R,F verify;
     class B,S,H memory;
 ```
 
-O [mapa completo](docs/MAPA-DO-PROJETO.md) detalha contexto, confiança do Jev, lotes, revisão e estados de publicação. O [onboarding](skills/orchestrate-models/references/onboarding.md) distingue entrada rápida e configuração completa.
+O [mapa completo](docs/MAPA-DO-PROJETO.md) detalha descoberta de modelos, ondas, confiança do Jev, revisão, Brain e recuperação. O [onboarding](skills/orchestrate-models/references/onboarding.md) distingue entrada rápida e configuração completa.
 
 ## Estado da versão
 
-| Recurso | Estado na 0.7.0 |
+| Recurso | Estado na 0.8.0 |
 |---|---|
 | Rotina local | `orchestrator.py`: `configure`, `doctor`, `start`, `status`, `resume`, `update`, `checkpoint` e `close` |
 | Retomada | Configuração persistente e uma entrega ativa por projeto, com objetivo, critérios, frentes, impedimentos e próximo passo |
 | Diagnóstico do contrato | Presença e aplicabilidade observáveis; `host_loaded: unknown` sem introspecção do host |
-| Brain e proveniência | UUIDs, relações explícitas, eventos SQLite, consolidação Markdown, origem Grok e estados distintos de commit, push e publicação |
-| Decisões | Proposta separada de aceite; substituição relaciona decisão antiga e nova aceita por `supersedes` e `replacement` |
-| Git | Coleta explícita de commits locais por caminho; não faz fetch ou push |
-| GitHub | Onboarding e operações manuais usando ferramentas disponíveis, com destino e autorização definidos |
-| Agentes e metas | Coordenação pela skill sobre os recursos efetivos do host; meta nativa opcional |
-| TypeSafe/Jev | Configuração local, catálogo e avaliações explícitas; o agente prepara candidatos e avalia o resultado |
+| Brain e proveniência | UUIDs, relações explícitas, eventos SQLite, consolidação Markdown, origem do host e estados distintos de commit, push e publicação |
+| Modelos | `model_registry.py` registra snapshots observados e normaliza `model/list`; IDs novos e upgrades viram candidatos, sem promoção silenciosa |
+| Escala | `batch_scheduler.py` valida uma DAG e produz ondas determinísticas dentro dos slots globais e por modelo; não lança agentes |
+| TypeSafe/Jev | Credencial protegida, chamadas explícitas e `jev_rerank.py` para shortlist local, Noul por candidato, limiar, abstenção e fallback |
+| Git e recuperação | `brain_sync.py` exporta snapshots endereçados por conteúdo, verifica, restaura com dry run e sincroniza por checkout Git dedicado |
 | Playwright | Detecção, orientação e kit opcional; adaptação e verificação no produto web são necessárias |
-| Recursos futuros | Hooks, worker permanente, sync GitHub, backup/restauração completos, recuperação automática com Jev e runner Claude |
+| Recursos futuros | Hooks e captura global, recovery automático orientado por Jev, runner Claude e adaptação a protocolos novos dos hosts |
 
-Python 3.10+ e biblioteca padrão em macOS/Linux. Git é necessário para importar commits; Node e Chromium são necessários no projeto que adotar o kit Playwright. O catálogo de modelos, os slots e a continuidade de execução pertencem ao host.
+Python 3.10+ e biblioteca padrão em macOS/Linux. Git é necessário para importar commits e sincronizar snapshots; Node e Chromium são necessários no projeto que adotar o kit Playwright. Catálogo, slots e continuidade de execução pertencem ao host.
 
 ## Runtime da rotina
 
@@ -76,30 +78,31 @@ python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" status --path /caminho/proje
 python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" resume --path /caminho/projeto
 ```
 
-A central segue a precedência `--home`, `HEBE_BRAIN_HOME` e configuração persistida. `configure` guarda a escolha; consultar o diagnóstico antes de inicializar ou registrar projetos. `start` seleciona um projeto por UUID ou caminho registrado. `resume` prepara contexto, sem iniciar agentes ou retomar uma meta nativa automaticamente. `checkpoint` e `close` aceitam a origem e referência observadas com `--source` e `--source-ref`. O [contrato do runtime](skills/orchestrate-models/references/daily-runtime.md) descreve os comandos.
+A central segue a precedência `--home`, `HEBE_BRAIN_HOME` e configuração persistida. `resume` prepara contexto, sem iniciar agentes ou retomar uma meta nativa automaticamente. `checkpoint` e `close` aceitam a origem e referência observadas com `--source` e `--source-ref`. O [contrato do runtime](skills/orchestrate-models/references/daily-runtime.md) descreve os comandos.
 
-`close` exige critérios `passed` ou `waived` com evidência, frentes concluídas e ausência de impedimentos. `waived` registra dispensa explícita com justificativa; não significa teste aprovado. Uma entrega parcial permanece aberta com próximo passo. Commit, push e publicação têm evidências próprias e só são realizados quando pertencem ao escopo autorizado.
+`close` exige critérios `passed` ou `waived` com evidência, frentes concluídas e ausência de impedimentos. `waived` registra dispensa explícita com justificativa; não significa teste aprovado. Commit, push e publicação têm evidências próprias e só são realizados quando pertencem ao escopo autorizado.
 
-## Contrato portátil e verificação
+## Catálogo observado e ondas
 
-`AGENTS.md` é a fonte compartilhada; `CLAUDE.md` importa `@AGENTS.md` para compatibilidade. Carregamento depende da versão e configuração de cada host. Usar `doctor` e, quando disponível, introspecção do host; um arquivo presente não comprova que entrou no contexto. Ver [agent-contract.md](skills/orchestrate-models/references/agent-contract.md).
-
-```sh
-python3 "$HEBE_PLUGIN_ROOT/scripts/project_context.py" status --path /caminho/projeto
-python3 "$HEBE_PLUGIN_ROOT/scripts/project_context.py" init --path /caminho/projeto
-```
-
-O inicializador preserva arquivos existentes. O agente preenche objetivo, comandos e critérios com dados reais. Verificar cada artefato com o método adequado: código/API, documento renderizado, dados reconciliados, mídia exportada ou experiência web.
-
-**Playwright aplica-se à superfície web.** Reutilizar a configuração existente; quando faltar e a validação no navegador for material:
+O catálogo privado fica em `~/.config/hebe-brain/model-catalog.json`. Importar somente dados efetivamente observados. Para o Codex App Server, salvar a resposta de `model/list` em arquivo regular e normalizá-la com o limite de agentes visto na sessão:
 
 ```sh
-python3 "$HEBE_PLUGIN_ROOT/scripts/project_context.py" web-init --path /caminho/projeto-web
+python3 "$HEBE_PLUGIN_ROOT/scripts/model_registry.py" import-codex --file /caminho/model-list.json --observed-at 2026-09-23T12:00:00Z --max-parallel 3
+python3 "$HEBE_PLUGIN_ROOT/scripts/model_registry.py" list
+python3 "$HEBE_PLUGIN_ROOT/scripts/model_registry.py" recommend --capability engineering --effort high
 ```
 
-O kit não instala dependências nem inicia o servidor por conta própria. Adaptar rotas, conteúdo esperado e critérios antes de executá-lo. A [política Playwright](skills/orchestrate-models/references/playwright.md) inclui jornada real, estado relevante de falha, desktop/mobile, erros e inspeção visual. Um smoke genérico não comprova o funcionamento do produto.
+`recommend` ordena candidatos elegíveis pela política informada; não comprova superioridade. Diferenças de snapshot registram modelos novos, removidos, alterados e upgrades anunciados. Um modelo novo ou `upgradeInfo` pede avaliação representativa antes de mudar a preferência.
 
-## TypeSafe/Jev explícito
+Para mais frentes que slots, descreva tarefas, dependências, modelos e limites observados em JSON. O planejador devolve ondas e tarefas bloqueadas:
+
+```sh
+python3 "$HEBE_PLUGIN_ROOT/scripts/batch_scheduler.py" --file examples/batch-plan.json
+```
+
+O scheduler é declarativo: ele não cria agentes, processos ou jobs. O coordenador executa uma onda por vez com as ferramentas nativas do host, observa o resultado e replana antes da próxima.
+
+## TypeSafe/Jev explícito e reranking
 
 Crie a chave no [console TypeSafe](https://console.typesafe.ai/) e conecte pelo formulário local:
 
@@ -107,17 +110,15 @@ Crie a chave no [console TypeSafe](https://console.typesafe.ai/) e conecte pelo 
 python3 "$HEBE_PLUGIN_ROOT/scripts/jev.py" status
 python3 "$HEBE_PLUGIN_ROOT/scripts/jev.py" configure --web
 python3 "$HEBE_PLUGIN_ROOT/scripts/jev.py" models
-python3 "$HEBE_PLUGIN_ROOT/scripts/jev.py" preview --file /caminho/consulta-autorizada.json
-python3 "$HEBE_PLUGIN_ROOT/scripts/jev.py" evaluate --file /caminho/consulta-autorizada.json
+python3 "$HEBE_PLUGIN_ROOT/scripts/jev_rerank.py" preview --file examples/jev-rerank.json
+python3 "$HEBE_PLUGIN_ROOT/scripts/jev_rerank.py" evaluate --file examples/jev-rerank.json --send
 ```
 
-Reutilizar credencial configurada antes de abrir o formulário. A configuração consulta o catálogo e não envia notas do Brain. A chave fica fora do projeto, em `~/.config/hebe-brain/typesafe.json`, com acesso restrito ao usuário; `TYPESAFE_API_KEY` tem precedência. `configure` sem `--web` usa prompt oculto no terminal. Nunca colocar a chave no chat, argumentos, Brain ou Git.
+A chave fica fora do projeto, em `~/.config/hebe-brain/typesafe.json`, com acesso restrito ao usuário; `TYPESAFE_API_KEY` tem precedência. Nunca colocar a chave no chat, argumentos, Brain ou Git. `preview` é local. `evaluate --send` é o único caminho de rede do reranker e autoriza o envio daquela shortlist.
 
-`preview` valida e resume o pedido localmente, sem credencial ou rede. `evaluate` envia o `state` e as `questions` explicitamente selecionados. A shortlist vem da busca local; o agente pode usar os julgamentos para rerank e tratar confiança/abstenção conforme [typesafe-jev.md](skills/orchestrate-models/references/typesafe-jev.md). Reranking automático e conexão contínua ao Brain permanecem futuros. A [skill oficial TypeSafe](https://github.com/typesafe-ai/skills) orienta o uso, mas não autentica a API.
+O reranker envia uma pergunta `Noul` independente por candidato, valida a resposta e ordena pela probabilidade. Se a credencial ou o serviço falhar, ou se o maior resultado ficar abaixo do limiar, ele se abstém e conserva a ordem local. Não imprime consulta, textos, metadados nem credenciais. Ver [typesafe-jev.md](skills/orchestrate-models/references/typesafe-jev.md).
 
-## Núcleo local e Git
-
-Os CLIs especializados continuam disponíveis. `brain.py` exige `--home` explícito; a configuração do orquestrador não modifica a interface desse comando.
+## Núcleo local, Git e recuperação
 
 ```sh
 HEBE_BRAIN_HOME="/caminho/central"
@@ -127,23 +128,34 @@ python3 "$HEBE_PLUGIN_ROOT/scripts/brain.py" --home "$HEBE_BRAIN_HOME" register 
 python3 "$HEBE_PLUGIN_ROOT/scripts/brain.py" --home "$HEBE_BRAIN_HOME" context --path /caminho/produto
 ```
 
-Usar os UUIDs devolvidos. Registrar subprojetos reais com `--parent UUID-DO-PAI`; a relação não carrega automaticamente o conteúdo dos pais ou irmãos. Worktrees podem consultar identidade existente com `context --project UUID`; resolução automática de aliases ainda é futura.
+Usar os UUIDs devolvidos. Registrar subprojetos reais com `--parent UUID-DO-PAI`; a relação não carrega automaticamente o conteúdo dos pais ou irmãos. `record` guarda eventos; `consolidate` aplica notas; `checkpoint` integra o estado da entrega com o Brain. Coletar commits locais com `git_events.py`; commit local não comprova push ou publicação.
 
-`record` guarda eventos; `consolidate` aplica as notas. `checkpoint` faz a integração do estado da entrega com o Brain. Repetir um evento idêntico não duplica dados; conteúdo diferente com o mesmo ID é recusado. As seções humanas fora dos blocos gerenciados são preservadas. Ver [Brain, eventos e GitHub](skills/orchestrate-models/references/brain-and-github.md).
+O sync exige uma central inicializada e um checkout Git comum, já existente e dedicado exclusivamente ao backup. O CLI não cria repositório, não armazena autenticação e não verifica a privacidade no provedor. Para remoto, o operador precisa confirmar que verificou o destino privado:
 
 ```sh
-python3 "$HEBE_PLUGIN_ROOT/scripts/git_events.py" --path /caminho/produto --project UUID-DO-PROJETO --limit 50 > /tmp/hebe-commits.json
-python3 "$HEBE_PLUGIN_ROOT/scripts/brain.py" --home "$HEBE_BRAIN_HOME" record --file /tmp/hebe-commits.json
-python3 "$HEBE_PLUGIN_ROOT/scripts/brain.py" --home "$HEBE_BRAIN_HOME" consolidate --project UUID-DO-PROJETO
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" configure --brain-home "$HEBE_BRAIN_HOME" --checkout /caminho/checkout-dedicado --remote origin --branch main --confirm-private-destination
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" status
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" export
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" verify --snapshot /caminho/checkout-dedicado
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" sync
 ```
 
-Conferir a associação entre UUID e caminho antes da coleta. O limite seleciona os commits recentes que tocam aquele caminho; `--before-revision SHA-COMPLETO` continua do último commit do lote anterior. Checkpoint Git automático e acompanhamento de renomes para fora da pasta ainda não estão implementados. Commit local não comprova push ou publicação.
+`export` cria um snapshot determinístico com documentos selecionados e exportações JSON canônicas dos bancos, além de `CURRENT.json`. `verify` confere integridade e estrutura. `sync` cria commit quando necessário e faz push sem force; divergências ficam visíveis. Autenticação usa o credential helper ou agente SSH já configurado pelo Git.
 
-## Armazenamento e limites
+Restauração é dry run até `--apply` e nunca sobrescreve arquivo divergente:
 
-O registro e os eventos ficam em `<raiz-central>/.state/brain.sqlite3`; entregas e checkpoints usam `.state/orchestrator.sqlite3`. Ambos ficam fora do envio Git padrão. Markdown permite consultar o conhecimento, mas não restaura sozinho IDs, fila e checkpoints. Um snapshot da entrega não é um backup restaurável de toda a base. **Sync GitHub e backup/restauração completos permanecem futuros.**
+```sh
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" restore --snapshot /caminho/checkout-dedicado --destination /caminho/recuperacao
+python3 "$HEBE_PLUGIN_ROOT/scripts/brain_sync.py" restore --snapshot /caminho/checkout-dedicado --destination /caminho/recuperacao --apply
+```
 
-A busca do núcleo cobre título e corpo de eventos; prosa legada pode ser consultada diretamente pelo agente, sem alegar índice automático de todo o vault. Consolidar é uma operação explícita. O filtro de padrões de credenciais reduz erros evidentes e não substitui revisão do material selecionado para publicação.
+Para operação recorrente, `run` permanece em primeiro plano. `install-launchd` sem `--activate` apenas prepara um preview privado; a instalação e inicialização do job exigem `--activate`. Nenhum runner foi ativado só por instalar a versão 0.8.0. Ver [Brain e GitHub](skills/orchestrate-models/references/brain-and-github.md).
+
+## Contrato portátil e verificação
+
+`AGENTS.md` é a fonte compartilhada; `CLAUDE.md` importa `@AGENTS.md` para compatibilidade. Um arquivo presente não comprova que entrou no contexto. Use `project_context.py status` e, quando disponível, introspecção do host.
+
+Playwright aplica-se à superfície web. Reutilizar a configuração existente; quando faltar e a validação no navegador for material, `project_context.py web-init --path /caminho/projeto-web` prepara um kit que ainda precisa ser adaptado ao produto.
 
 ## Validação e evolução
 
@@ -151,6 +163,4 @@ A busca do núcleo cobre título e corpo de eventos; prosa legada pode ser consu
 python3 -m unittest discover -s tests -v
 ```
 
-Executar na raiz do plugin. Os testes usam recursos temporários; seu resultado deve acompanhar a revisão testada. Validar também o pacote instalado antes de distribuir: versão declarada, conteúdo do checkout e publicação são estados distintos.
-
-A [arquitetura de evolução](docs/ORCHESTRATOR-EVOLUCAO.md) organiza as próximas etapas sem ativá-las. A versão 0.7.0 não instala hooks, scheduler, runner Claude ou sincronização permanente.
+Executar na raiz do plugin e validar também o pacote instalado. Versão declarada, conteúdo do checkout, commit, push e publicação são estados distintos. A [arquitetura de evolução](docs/ORCHESTRATOR-EVOLUCAO.md) mantém como próximos passos hooks/captura global, recovery automático, runner Claude e adapters para protocolos novos.

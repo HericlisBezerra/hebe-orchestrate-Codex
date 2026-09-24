@@ -6,3 +6,7 @@ dist/
 .env
 .env.*
 !.env.example
+
+# HeBeBrain local knowledge belongs to this checkout, not to the plugin package.
+/Brain.md
+/vault/

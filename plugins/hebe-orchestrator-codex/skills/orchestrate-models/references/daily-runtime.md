@@ -1,6 +1,6 @@
 # Rotina local e retomada
 
-Ler ao configurar a raiz do Brain, iniciar ou retomar uma entrega, registrar evidências e fechar o trabalho. `scripts/orchestrator.py` é a entrada da rotina na versão 0.7.0. Os agentes e as ferramentas do host executam o trabalho; o runtime conserva configuração e estado.
+Ler ao configurar a raiz do Brain, iniciar ou retomar uma entrega, registrar evidências e fechar o trabalho. `scripts/orchestrator.py` é a entrada da rotina na versão 0.8.0. Os agentes e as ferramentas do host executam o trabalho; o runtime conserva configuração e estado. Catálogo, ondas, reranking e sync são CLIs complementares, não efeitos implícitos de `resume`.
 
 ## Localizar e configurar
 
@@ -12,7 +12,7 @@ python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" configure --brain-home /cami
 python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" doctor --path /caminho/projeto
 ```
 
-`configure` salva a escolha em `~/.config/hebe-brain/orchestrator.json`, com permissão `0600`, e não inicializa o Brain. Conferir `brain_initialized` na resposta e inicializar/registrar projetos com `brain.py` quando necessário. Configurar uma raiz não conecta GitHub ou Jev e não inicia captura ou execução permanente. O núcleo especializado continua disponível com `brain.py --home <raiz-central>`.
+`configure` salva a escolha em `~/.config/hebe-brain/orchestrator.json`, com permissão `0600`, e não inicializa o Brain. Conferir `brain_initialized` na resposta e inicializar/registrar projetos com `brain.py` quando necessário. Configurar uma raiz não conecta GitHub ou Jev e não inicia captura, sync ou execução permanente. O núcleo especializado continua disponível com `brain.py --home <raiz-central>`.
 
 ## Comandos
 
@@ -70,7 +70,7 @@ python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" resume --delivery ID-DA-ENTR
 
 Cada evidência útil identifica procedimento, resultado, ambiente/revisão e referência ao artefato quando aplicável. As frentes descrevem resultados reais; o registro de uma frente não cria um agente. Modelo solicitado, efetivo ou herdado e os limites conhecidos permanecem visíveis no relato do coordenador.
 
-Conferir `checkpoint.required`, `pending` e `last_applied_revision` na resposta. Um snapshot idempotente permite repetir a operação sem duplicar o mesmo registro; ele não é um backup restaurável de todos os projetos nem comprova envio ao GitHub. As entregas e a fila de checkpoints ficam em `<raiz-central>/.state/orchestrator.sqlite3`, além do banco `brain.sqlite3`.
+Conferir `checkpoint.required`, `pending` e `last_applied_revision` na resposta. O snapshot idempotente do checkpoint conserva aquela revisão da entrega, mas é diferente do snapshot restaurável criado por `brain_sync.py export`. As entregas e a fila de checkpoints ficam em `<raiz-central>/.state/orchestrator.sqlite3`, além do banco `brain.sqlite3`.
 
 ## Fechar com estados distintos
 
@@ -91,8 +91,23 @@ python3 "$HEBE_PLUGIN_ROOT/scripts/orchestrator.py" close --delivery ID-DA-ENTRE
 
 Uma entrega parcial usa `update` e `checkpoint` e permanece disponível para `resume`. `close` não executa commit, push, deploy ou transição da meta nativa. O coordenador atualiza esses estados somente após evidência correspondente e dentro da autorização existente.
 
+## CLIs complementares da 0.8.0
+
+| CLI | Uso na rotina | Limite |
+|---|---|---|
+| `model_registry.py` | Importar catálogo observado, inclusive resposta Codex `model/list`, e gerar candidatos | Não sonda provedor nem promove upgrade |
+| `batch_scheduler.py --file <plano.json>` | Validar DAG e produzir ondas dentro dos slots | Não lança agentes; replanejar após cada onda observada |
+| `jev_rerank.py preview/evaluate` | Reordenar shortlist autorizada com limiar e fallback | `evaluate --send` é a única chamada de rede do reranker |
+| `brain_sync.py export/verify/sync/restore` | Criar snapshot restaurável e usar checkout Git dedicado | Não cria repo/auth; restore é dry run até `--apply` |
+
+O catálogo privado padrão fica em `~/.config/hebe-brain/model-catalog.json`; a configuração do sync em `~/.config/hebe-brain/sync.json`. Ambos têm comandos próprios de `status`/`list` e precisam ser consultados quando a entrega depende deles. `orchestrator.py` não os ativa.
+
+Para trabalho em volume, registrar critérios e frentes na entrega, planejar a DAG e executar uma onda por vez com as ferramentas do host. O coordenador atualiza estados e evidências; uma linha na saída do planejador não comprova execução.
+
+Para proteção do Brain, configurar um checkout privado dedicado, executar `export`/`verify` e testar `restore` antes de afirmar recuperação. `sync` cria commit e push sem force. Operação recorrente usa `brain_sync.py run` ou launchd explicitamente ativado; `install-launchd` sem `--activate` cria apenas preview.
+
 ## Diagnóstico e fronteiras
 
 O diagnóstico distingue contrato **presente** no disco, **aplicável** ao caminho e **carregado** pelo host. Sem introspecção do runtime hospedeiro, `host_loaded` permanece `unknown`. O agente pode registrar a evidência observada no host; um CLI de arquivos não comprova a composição real do contexto da conversa.
 
-Este runtime não inclui daemon, hooks, scheduler de agentes, runner Claude, recuperação automática com Jev, sync GitHub ou backup/restauração completos. `resume` prepara contexto para o trabalho autorizado na sessão atual; a continuidade depois dela depende dos recursos do host.
+Este runtime não inclui daemon geral, hooks/captura global, scheduler que lance agentes, runner Claude ou recuperação automática com Jev. A versão 0.8.0 inclui planejamento em ondas, reranking explícito e sync/restauração via CLIs separados. `resume` prepara contexto para o trabalho autorizado na sessão atual; continuidade e execução recorrente dependem dos recursos do host e de ativação explícita.
